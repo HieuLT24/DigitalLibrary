@@ -1,0 +1,16 @@
+<header class="topbar">
+    <div class="container topbar-inner">
+        <a class="home-icon" href="{{ url_for('index') }}" aria-label="Trang chủ"><i class="fa-solid fa-house"></i></a>
+        <div class="brand">Trang Chủ</div>
+        <form class="search" role="search">
+            <input type="search" placeholder="Tìm kiếm" aria-label="Tìm kiếm">
+            <button type="submit" aria-label="Tìm"><i class="fa-solid fa-magnifying-glass"></i></button>
+        </form>
+        <div class="top-actions">
+            <a href="#" aria-label="Danh sách chờ duyệt"><i class="fa-solid fa-list-check me-1"></i>Danh sách chờ duyệt</a>
+            <a href="{{ url_for('user_profile') }}" aria-label="Tài khoản"><i class="fa-solid fa-user me-1"></i>Tài khoản</a>
+        </div>
+    </div>
+    <div class="topbar-accent"></div>
+</header>
+
