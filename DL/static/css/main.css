@@ -1,0 +1,76 @@
+:root { --container: 960px; --gap: 16px; }
+* { box-sizing: border-box; }
+body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.5; }
+/* Topbar */
+.topbar { background: #00bcd4; color: #fff; }
+.topbar-inner { display: flex; align-items: center; gap: 16px; height: 64px; }
+.home-icon { text-decoration: none; font-size: 20px; }
+.brand { font-weight: 600; }
+.search { display: flex; gap: 8px; margin-left: auto; }
+.search input { width: 360px; max-width: 50vw; padding: 8px; border: none; border-radius: 4px; }
+.search button { padding: 8px 12px; border: none; border-radius: 4px; }
+.top-actions a { color: #fff; text-decoration: none; margin-left: 16px; }
+.top-actions a i { margin-right: 4px; }
+.topbar-accent { height: 4px; background: #008fa1; }
+
+.container { max-width: var(--container); margin: 0 auto; padding: 0 var(--gap); }
+.main-content { padding: 24px var(--gap); }
+h1 { margin: 0 0 8px; }
+p { margin: 0 0 16px; color: #333; }
+
+/* Footer */
+.footer { border-top: 1px solid #ddd; margin-top: 40px; padding: 24px 0; background: #fafafa; }
+.footer-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; }
+.footer h4 { margin: 0 0 8px; }
+.footer ul { margin: 0; padding: 0; list-style: none; color: #555; }
+.footer .social { display: flex; gap: 12px; margin-top: 8px; }
+.footer .social a { color: #333; font-size: 20px; }
+
+/* Profile */
+.profile-layout { display: grid; grid-template-columns: 260px 1fr; gap: 16px; }
+.profile-card { background: #f2f2f2; padding: 16px; border-radius: 8px; text-align: center; }
+.profile-card .avatar { width: 96px; height: 96px; border-radius: 50%; background: #ddd; display: inline-flex; align-items: center; justify-content: center; font-size: 48px; margin: 8px 0; }
+.stats { list-style: none; padding: 0; margin: 8px 0 0; color: #555; }
+.panel { background: #e9e9e9; padding: 16px; border-radius: 8px; margin-bottom: 16px; }
+.form-grid { display: grid; grid-template-columns: 180px 1fr; gap: 12px; align-items: center; }
+.gender { display: flex; gap: 16px; }
+.form-actions { grid-column: 2 / -1; text-align: right; }
+.form-actions-left { grid-column: 1 / 2; text-align: left; }
+.btn-primary { background: #c62828; color: #fff; border: none; padding: 10px 16px; border-radius: 6px; }
+
+/* Book detail */
+.book-detail { display: grid; grid-template-columns: 380px 1fr; gap: 16px; }
+.book-detail .cover img { width: 100%; height: auto; border-radius: 8px; }
+.meta-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 16px; padding: 12px; border: 1px solid #bbb; border-radius: 8px; }
+.meta-grid span { color: #555; }
+table.spec { width: 100%; border-collapse: collapse; }
+table.spec th, table.spec td { border: 1px solid #d3d3d3; padding: 10px; background: #f0f0f0; }
+table.spec td { background: #fff; }
+.book-description { border: 1px solid #bbb; border-radius: 8px; padding: 12px; margin-top: 16px; }
+
+/* Admin */
+.admin-layout { display: grid; grid-template-columns: 220px 1fr; gap: 16px; }
+.admin-sidenav { background: #3f2fb5; color: #fff; padding: 16px; border-radius: 8px; }
+.admin-sidenav nav { display: grid; gap: 8px; }
+.admin-sidenav a { color: #fff; text-decoration: none; opacity: .9; }
+.admin-sidenav a.active { font-weight: 600; opacity: 1; }
+.admin-content h2 { margin-top: 0; }
+.cards { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+.card { background: #fff; border: 1px solid #e2e2e2; border-radius: 8px; padding: 12px; }
+.card.success { border-color: #b7e1c0; }
+.card.danger { border-color: #f4c7c3; }
+.card.warning { border-color: #ffe7a3; }
+.panel-header { display: flex; align-items: center; justify-content: space-between; }
+.table-search { padding: 8px 12px; border-radius: 6px; border: 1px solid #ddd; }
+table.requests { width: 100%; border-collapse: collapse; }
+table.requests th, table.requests td { padding: 10px; border-bottom: 1px solid #eee; text-align: left; }
+.status { padding: 2px 8px; border-radius: 12px; font-size: 12px; background: #eee; }
+.status.approved { background: #d4f1da; }
+.status.rejected { background: #fbe0de; }
+.status.pending { background: #ffeeba; }
+.status.overdue { background: #ffd6a5; }
+.actions { font-size: 18px; }
+.request-detail-grid { display: grid; grid-template-columns: 2fr 2fr 1fr; gap: 12px; }
+.btn-success { background: #2e7d32; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; }
+.btn-danger { background: #c62828; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; }
+
