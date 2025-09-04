@@ -1,54 +1,34 @@
-from flask import Flask, render_template
+from flask import Flask
+from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
+# Khởi tạo extensions
+db = SQLAlchemy()
+migrate = Migrate()
 
-app = Flask(__name__)
-
-@app.route("/")
-def index():
-    return render_template("index.html")
-
-@app.route("/book/<int:book_id>")
-def book_detail(book_id):
-    sample_book = {
-        "id": book_id,
-        "title": "The Great Gatsby",
-        "author": "F. Scott Fitzgerald",
-        "isbn": "978-0-7432-7356-5",
-        "genre": "Tiểu thuyết",
-        "description": "Một trong những tác phẩm kinh điển nhất của văn học Mỹ..."
-    }
-    return render_template("book_detail.html", book=sample_book)
-
-
-@app.route("/profile")
-def user_profile():
-    user_data = {
-        "name": "Nguyen Van A",
-        "borrow_count": 36,
-        "pending_books": 2,
-        "email": "vana@example.com",
-        "phone": "0123456789",
-        "gender": "Nam"
-    }
-    return render_template("user_profile.html", user=user_data)
-
-@app.route("/admin/requests")
-def admin_requests():
-    # dữ liệu mẫu
-    requests = [
-        {"book": "The Great Gatsby", "user": "John Smith", "req_date": "Jun 12, 2023", "due_date": "Jul 12, 2023", "status": "Pending"},
-        {"book": "To Kill a Mockingbird", "user": "Sarah Johnson", "req_date": "Jun 10, 2023", "due_date": "Jul 10, 2023", "status": "Approved"},
-        {"book": "1984", "user": "Michael Brown", "req_date": "Jun 8, 2023", "due_date": "Jun 22, 2023", "status": "Rejected"},
-        {"book": "Pride and Prejudice", "user": "Emily Davis", "req_date": "Jun 5, 2023", "due_date": "Jun 19, 2023", "status": "Overdue"}
-    ]
-    return render_template("admin_templates/admin_requests.html", requests=requests)
-
-
-
-
-
-
-
-if __name__ =="__main__":
-    with app.app_context():
-        app.run(debug=True)
+def create_app(config_name='default'):
+    """Application factory pattern"""
+    app = Flask(__name__)
+    
+    # Load config
+    if config_name == 'development':
+        app.config.from_object('DL.config.DevelopmentConfig')
+    elif config_name == 'production':
+        app.config.from_object('DL.config.ProductionConfig')
+    else:
+        app.config.from_object('DL.config.Config')
+    
+    # Initialize extensions
+    db.init_app(app)
+    migrate.init_app(app, db)
+    
+    # Register blueprints
+    from DL.routes.main import main_bp
+    from DL.routes.admin import admin_bp
+    from DL.routes.user import user_bp
+    
+    app.register_blueprint(main_bp)
+    app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(user_bp, url_prefix='/user')
+    
+    return app
