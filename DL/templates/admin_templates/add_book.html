@@ -1,0 +1,91 @@
+{% extends 'base.html' %} {% block title %}Thêm Sách Mới{% endblock %} {% block content %}
+<body class="bg-light">
+  <div class="container py-5">
+    <div class="card shadow-lg">
+      <div class="card-header bg-primary text-white">
+        <h4 class="mb-0">Thêm Sách Mới</h4>
+      </div>
+      <div class="card-body">
+        <form method="post" action="/add-book">
+          <div class="mb-3">
+            <label for="title" class="form-label">Tên sách</label>
+            <input type="text" class="form-control" id="title" name="title" placeholder="Nhập tên sách" required />
+          </div>
+
+          <div class="mb-3">
+            <label for="author" class="form-label">Tác giả</label>
+            <input type="text" class="form-control" id="author" name="author" placeholder="Nhập tên tác giả" required />
+          </div>
+
+          <div class="mb-3">
+            <label for="isbn" class="form-label">ISBN</label>
+            <input type="text" class="form-control" id="isbn" name="isbn" placeholder="Nhập mã ISBN" />
+          </div>
+
+          <div class="mb-3">
+            <label for="genre" class="form-label">Thể loại</label>
+            <select id="genre" name="genre" class="form-select">
+              <option value="Tiểu thuyết">Tiểu thuyết</option>
+              <option value="Khoa học">Khoa học</option>
+              <option value="Lịch sử">Lịch sử</option>
+              <option value="Giáo dục">Giáo dục</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="language" class="form-label">Ngôn ngữ</label>
+            <select id="language" name="language" class="form-select">
+              <option value="Tiếng Việt">Tiếng Việt</option>
+              <option value="Tiếng Anh">Tiếng Anh</option>
+              <option value="Tiếng Pháp">Tiếng Pháp</option>
+              <option value="Tiếng Nhật">Tiếng Nhật</option>
+              <option value="Khác">Khác</option>
+            </select>
+          </div>
+
+          <div class="mb-3">
+            <label for="year" class="form-label">Năm xuất bản</label>
+            <input
+              type="number"
+              class="form-control"
+              id="year"
+              name="year"
+              placeholder="Ví dụ: 2023"
+              min="1000"
+              max="2100"
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="quantity" class="form-label">Số lượng</label>
+            <input
+              type="number"
+              class="form-control"
+              id="quantity"
+              name="quantity"
+              placeholder="Nhập số lượng sách"
+              min="1"
+              required
+            />
+          </div>
+
+          <div class="mb-3">
+            <label for="description" class="form-label">Mô tả</label>
+            <textarea
+              class="form-control"
+              id="description"
+              name="description"
+              rows="4"
+              placeholder="Mô tả ngắn về sách..."
+            ></textarea>
+          </div>
+
+          <button type="submit" class="btn btn-success">Lưu Sách</button>
+          <a href="/" class="btn btn-secondary">Hủy</a>
+        </form>
+      </div>
+    </div>
+  </div>
+</body>
+{% endblock %}
