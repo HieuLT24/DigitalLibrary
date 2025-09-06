@@ -72,11 +72,10 @@
 </style>
 
 <div class="book-detail-wrapper">
-  <!-- LEFT -->
   <div class="book-left">
     <div class="cover-box">
-      {% if book.cover_url %}
-        <img src="{{ book.cover_url }}" alt="Bìa sách {{ book.title }}">
+      {% if book.image %}
+        <img src="{{ book.image }}" alt="Bìa sách {{ book.title }}">
       {% else %}
         <img src="{{ url_for('static', filename='img/placeholder-cover.svg') }}" alt="Bìa sách">
       {% endif %}
@@ -84,9 +83,7 @@
     <button class="btn-borrow">Đăng ký mượn sách</button>
   </div>
 
-  <!-- RIGHT -->
   <div class="book-right">
-    <!-- SUMMARY -->
     <div class="summary-card">
       <h2>{{ book.title }}
         {% if book.status %}
