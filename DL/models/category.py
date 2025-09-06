@@ -15,3 +15,9 @@ class Category(db.Model):
             'name': self.name,
         }
 
+    def to_dict(self):
+        return {
+            "category_id": self.category_id,
+            "name": self.name
+        }
+
