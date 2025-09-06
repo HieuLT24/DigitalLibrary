@@ -1,6 +1,5 @@
 
 from DL import create_app, db
-from DL.models import User, Book, Author, Category, BorrowSlip, BorrowRequest, Notification
 
 def create_database_tables():
     app = create_app()
@@ -16,6 +15,6 @@ def create_database_tables():
             
             
         except Exception as e:
-            print(f"❌ Lỗi khi tạo bảng: {e}")
+            print(f"Lỗi khi tạo bảng: {e}")
 if __name__ == "__main__":
     create_database_tables()
