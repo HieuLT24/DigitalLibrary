@@ -14,11 +14,13 @@ class Book(db.Model):
     quantity = db.Column(db.Integer, default=1)
     library_location = db.Column(db.String(100))
     
+
     weight = db.Column(db.Float)
     size = db.Column(db.String(100))
     page_count = db.Column(db.Integer)
     cover_type = db.Column(db.String(100))
     isbn = db.Column(db.String(100))
+    image = db.Column(db.String(255))
     status = db.Column(db.String(50), default="available")
 
     category_id = db.Column(db.Integer, db.ForeignKey("category.category_id"), nullable=False)
@@ -41,6 +43,7 @@ class Book(db.Model):
             "page_count": self.page_count,
             "cover_type": self.cover_type,
             "isbn": self.isbn,
+            "image": self.image,
             "status": self.status,
             "category_id": self.category_id,
             "author_id": self.author_id,

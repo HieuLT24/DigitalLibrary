@@ -111,6 +111,14 @@ class SearchAutocomplete {
     }
     
     createBookImage(book) {
+        if (book.image) {
+            return `
+                <div class="search-result-image">
+                    <img src="${book.image}" alt="${book.title}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 4px;">
+                </div>
+            `;
+        }
+        
         const firstLetter = book.title.charAt(0).toUpperCase();
         const colors = ['#e3f2fd', '#f3e5f5', '#e8f5e8', '#fff3e0', '#fce4ec'];
         const colorIndex = book.book_id % colors.length;
