@@ -1,0 +1,58 @@
+-- ====== AUTHOR (10 tác giả) ======
+INSERT INTO author (author_id, name) VALUES
+(1, 'Nguyen Nhat Anh'),
+(2, 'To Hoai'),
+(3, 'J.K. Rowling'),
+(4, 'George Orwell'),
+(5, 'Haruki Murakami'),
+(6, 'Dan Brown'),
+(7, 'Paulo Coelho'),
+(8, 'Victor Hugo'),
+(9, 'Ernest Hemingway'),
+(10, 'Gabriel Garcia Marquez');
+
+-- ====== CATEGORY (5 thể loại) ======
+INSERT INTO category (category_id, name) VALUES
+(1, 'Literature'),
+(2, 'Science Fiction'),
+(3, 'Mystery'),
+(4, 'Philosophy'),
+(5, 'Children');
+
+-- ====== USER (3 user) ======
+INSERT INTO user (user_id, full_name, email, username, password, role, status) VALUES
+(1, 'Admin User', 'admin@library.com', 'admin', 'admin123', 'admin', 'active'),
+(2, 'Library Staff', 'staff@library.com', 'staff', 'staff123', 'librarian', 'active'),
+(3, 'Normal User', 'user@library.com', 'user', 'user123', 'member', 'active');
+
+-- ====== BOOK (20 cuốn, 2 sách/tác giả, 4 sách/thể loại) ======
+INSERT INTO book (book_id, title, publisher, publish_year, language, description, quantity, library_location, weight, size, page_count, cover_type, isbn, status, category_id, author_id) VALUES
+(1, 'Cho Toi Xin Mot Ve Di Tuoi Tho', 'NXB Tre', 2008, 'Vietnamese', 'Tieu thuyet thieu nhi', 5, 'A1', 0.3, '13x20', 250, 'Paperback', 'ISBN0001', 'available', 5, 1),
+(2, 'Mat Biec', 'NXB Tre', 1990, 'Vietnamese', 'Tieu thuyet tinh cam', 5, 'A2', 0.4, '14x21', 300, 'Paperback', 'ISBN0002', 'available', 1, 1),
+
+(3, 'De Men Phieu Luu Ky', 'NXB Kim Dong', 1941, 'Vietnamese', 'Tac pham kinh dien', 5, 'B1', 0.2, '12x19', 200, 'Paperback', 'ISBN0003', 'available', 5, 2),
+(4, 'Ong Gioi Ao Den', 'NXB Tre', 1985, 'Vietnamese', 'Truyen ngan', 5, 'B2', 0.25, '13x20', 220, 'Paperback', 'ISBN0004', 'available', 1, 2),
+
+(5, 'Harry Potter 1', 'Bloomsbury', 1997, 'English', 'Fantasy novel', 10, 'C1', 0.5, '15x23', 350, 'Hardcover', 'ISBN0005', 'available', 2, 3),
+(6, 'Harry Potter 2', 'Bloomsbury', 1998, 'English', 'Fantasy novel', 10, 'C2', 0.55, '15x23', 370, 'Hardcover', 'ISBN0006', 'available', 2, 3),
+
+(7, '1984', 'Secker & Warburg', 1949, 'English', 'Dystopian novel', 7, 'D1', 0.45, '14x21', 328, 'Hardcover', 'ISBN0007', 'available', 2, 4),
+(8, 'Animal Farm', 'Secker & Warburg', 1945, 'English', 'Political satire', 7, 'D2', 0.35, '13x20', 250, 'Paperback', 'ISBN0008', 'available', 4, 4),
+
+(9, 'Norwegian Wood', 'Kodansha', 1987, 'Japanese', 'Romantic novel', 8, 'E1', 0.4, '14x21', 296, 'Paperback', 'ISBN0009', 'available', 1, 5),
+(10, 'Kafka on the Shore', 'Shinchosha', 2002, 'Japanese', 'Magical realism', 8, 'E2', 0.5, '14x21', 320, 'Paperback', 'ISBN0010', 'available', 4, 5),
+
+(11, 'The Da Vinci Code', 'Doubleday', 2003, 'English', 'Mystery thriller', 9, 'F1', 0.6, '15x23', 450, 'Hardcover', 'ISBN0011', 'available', 3, 6),
+(12, 'Angels and Demons', 'Pocket Books', 2000, 'English', 'Mystery thriller', 9, 'F2', 0.58, '15x23', 420, 'Hardcover', 'ISBN0012', 'available', 3, 6),
+
+(13, 'The Alchemist', 'HarperOne', 1988, 'Portuguese', 'Philosophical novel', 6, 'G1', 0.32, '13x20', 197, 'Paperback', 'ISBN0013', 'available', 4, 7),
+(14, 'Brida', 'HarperOne', 1990, 'Portuguese', 'Philosophical novel', 6, 'G2', 0.34, '13x20', 210, 'Paperback', 'ISBN0014', 'available', 4, 7),
+
+(15, 'Les Misérables', 'A. Lacroix', 1862, 'French', 'Historical novel', 5, 'H1', 0.9, '16x24', 1463, 'Hardcover', 'ISBN0015', 'available', 1, 8),
+(16, 'The Hunchback of Notre-Dame', 'Gosselin', 1831, 'French', 'Romantic novel', 5, 'H2', 0.85, '16x24', 940, 'Hardcover', 'ISBN0016', 'available', 1, 8),
+
+(17, 'The Old Man and the Sea', 'Charles Scribner''s Sons', 1952, 'English', 'Novella', 4, 'I1', 0.28, '13x20', 127, 'Paperback', 'ISBN0017', 'available', 1, 9),
+(18, 'A Farewell to Arms', 'Charles Scribner''s Sons', 1929, 'English', 'War novel', 4, 'I2', 0.3, '13x20', 355, 'Paperback', 'ISBN0018', 'available', 1, 9),
+
+(19, 'One Hundred Years of Solitude', 'Editorial Sudamericana', 1967, 'Spanish', 'Magic realism', 5, 'J1', 0.7, '15x23', 417, 'Hardcover', 'ISBN0019', 'available', 1, 10),
+(20, 'Love in the Time of Cholera', 'Editorial Oveja Negra', 1985, 'Spanish', 'Romantic novel', 5, 'J2', 0.65, '15x23', 348, 'Hardcover', 'ISBN0020', 'available', 1, 10);
