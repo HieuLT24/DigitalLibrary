@@ -1,13 +1,136 @@
 {% extends 'base.html' %}
-
 {% block title %}Trang chủ - Thư viện số{% endblock %}
 
 {% block content %}
-<h1>DEMO</h1>
-<p>
-    <a href='/books'>Danh sách sách</a>
-    <a href='/book/1'>Chi tiết sách (ID 1)</a>
-    <a href='/user/profile'>Hồ sơ</a>
-    <a href='/admin/requests'>Admin</a>
-</p>
+<style>
+/* ===== Background Option 1: Gradient rất nhẹ ===== */
+body {
+  background: linear-gradient(180deg,#f2fbfd 0%,#ffffff 320px) fixed;
+}
+
+/* Giữ nguyên các style hiện có (bạn có thể đã có phần này; nếu có rồi thì chỉ cần giữ dòng body ở trên). */
+.hero-boxes{
+  display:flex; gap:18px; flex-wrap:wrap; margin:40px auto 34px;
+  max-width:980px;
+}
+.hero-box{
+  flex:1 1 200px;
+  background:#fff; border:1px solid #e2e8f0; border-radius:8px;
+  padding:22px 14px; text-align:center;
+  box-shadow:0 1px 2px rgba(0,0,0,.05);
+  cursor:pointer; transition:.18s;
+  text-decoration:none; color:#1b2730;
+  font-weight:600; font-size:13px; letter-spacing:.5px;
+  min-height:120px;
+  display:flex; flex-direction:column; justify-content:center;
+}
+.hero-box:hover{
+  border-color:#00b4d8; box-shadow:0 6px 18px -6px rgba(0,0,0,.15);
+  transform:translateY(-3px);
+}
+.hero-box .icon{
+  font-size:34px; line-height:1; margin-bottom:10px;
+}
+
+.hero-heading{
+  text-align:center; font-weight:700; font-size:22px; letter-spacing:.8px;
+  margin:28px 0 6px; text-transform:uppercase;
+}
+.section-title{
+  font-size:18px; font-weight:700; letter-spacing:.5px;
+  text-transform:uppercase; margin:0 0 18px 0;
+}
+
+.book-cards{
+  display:grid; gap:22px;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  max-width:1180px; margin:0 auto 70px;
+}
+.book-card{
+  background:#fff; border:1px solid #e0e6eb; border-radius:8px;
+  overflow:hidden; display:flex; flex-direction:column;
+  box-shadow:0 2px 4px rgba(0,0,0,.05); transition:.16s;
+  min-height:320px;
+}
+.book-card:hover{
+  box-shadow:0 8px 20px -6px rgba(0,0,0,.18);
+  border-color:#c5d3de;
+}
+.book-cover{
+  position:relative; padding-top:140%; background:#f2f5f7; display:flex;
+  align-items:center; justify-content:center; color:#9aa4ad; font-size:12px; font-weight:500;
+}
+.book-cover img{
+  position:absolute; inset:0; width:100%; height:100%; object-fit:cover; transition:.18s;
+}
+.book-card:hover .book-cover img{ transform:scale(1.045); }
+
+.book-body{ padding:12px 12px 14px; display:flex; flex-direction:column; flex:1; }
+.book-title{
+  font-size:14px; font-weight:600; margin:0 0 6px; line-height:1.3;
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden;
+}
+.book-author{
+  font-size:12px; color:#5a6d7e; margin:0 0 12px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+}
+.btn-detail{
+  margin-top:auto; background:#00b4d8; border:none; color:#fff; font-weight:600;
+  font-size:12px; padding:8px 0; border-radius:4px; text-align:center;
+  text-decoration:none; letter-spacing:.5px; transition:.15s;
+}
+.btn-detail:hover{ background:#0293b0; color:#fff; }
+
+@media (max-width:720px){
+  .hero-boxes{ gap:14px; }
+  .hero-box{ flex:1 1 calc(50% - 14px); min-height:110px; }
+  .book-cards{ gap:18px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
+}
+</style>
+
+<h2 class="hero-heading">Chào mừng bạn đến với Thư viện số!</h2>
+
+<div class="hero-boxes">
+  <a class="hero-box" href="{{ url_for('main.book_list') }}">
+    <div class="icon">📚</div>
+    DANH MỤC SÁCH
+  </a>
+  <a class="hero-box" href="{{ url_for('main.book_list') }}">
+    <div class="icon">📖</div>
+    DANH SÁCH SÁCH
+  </a>
+  <a class="hero-box" href="#new-books">
+    <div class="icon">🆕</div>
+    SÁCH MỚI
+  </a>
+  <a class="hero-box" href="#featured">
+    <div class="icon">⭐</div>
+    SÁCH NỔI BẬT
+  </a>
+</div>
+
+<h3 id="featured" class="section-title" style="max-width:1180px;margin-left:auto;margin-right:auto;">SÁCH NỔI BẬT</h3>
+<div class="book-cards">
+  {% if random_books and random_books|length > 0 %}
+    {% for b in random_books %}
+      <div class="book-card">
+        <div class="book-cover">
+          {% if b.cover_url %}
+            <img src="{{ b.cover_url }}" alt="{{ b.title }}">
+          {% else %}
+            <span>NO COVER</span>
+          {% endif %}
+        </div>
+        <div class="book-body">
+          <h4 class="book-title" title="{{ b.title }}">{{ b.title }}</h4>
+            <div class="book-author">
+              {% if b.author %}{{ b.author.name }}{% else %}—{% endif %}
+            </div>
+            <a class="btn-detail" href="{{ url_for('main.book_detail', book_id=b.book_id) }}">CHI TIẾT</a>
+        </div>
+      </div>
+    {% endfor %}
+  {% else %}
+    <p>Chưa có sách trong hệ thống.</p>
+  {% endif %}
+</div>
 {% endblock %}

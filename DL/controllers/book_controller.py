@@ -81,3 +81,12 @@ def get_authors():
             'success': False,
             'message': f'Lỗi: {str(e)}'
         }), 500
+
+@book_controller.route("/api/books/random", methods=['GET'])
+def random_books():
+    try:
+        limit = request.args.get('limit', 4, type=int)
+        result = book_service.get_random_books(limit=limit)
+        return jsonify(result), (200 if result['success'] else 500)
+    except Exception as e:
+        return jsonify({'success': False,'message': f'Lỗi: {str(e)}'}), 500
