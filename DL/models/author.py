@@ -6,3 +6,9 @@ class Author(db.Model):
     name = db.Column(db.String(100), nullable=False)
     
     books = db.relationship("Book", backref="author", lazy=True)
+    
+    def to_dict(self):
+        return {
+            'author_id': self.author_id,
+            'name': self.name,
+        }

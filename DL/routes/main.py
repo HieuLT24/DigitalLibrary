@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template
+from flask import Blueprint, render_template, request
 
 main_bp = Blueprint('main', __name__)
 
@@ -17,3 +17,8 @@ def book_detail(book_id):
         "description": "Một trong những tác phẩm kinh điển nhất của văn học Mỹ..."
     }
     return render_template("book_detail.html", book=sample_book)
+
+@main_bp.route("/search")
+def search():
+    search_query = request.args.get('q', '')
+    return render_template("search.html", search_query=search_query, total_results=0)

@@ -33,8 +33,7 @@ class BookService:
                 'message': f'Lỗi khi lấy danh sách sách: {str(e)}'
             }
     
-    def search_books(self, keyword='', category_id=None, author_id=None, 
-                    status='available', page=1, per_page=10):
+    def search_books(self, keyword='', page=1, per_page=10):
         try:
             query = Book.query
             
@@ -46,15 +45,7 @@ class BookService:
                         Book.isbn.contains(keyword)
                     )
                 )
-            if category_id:
-                query = query.filter(Book.category_id == category_id)
-            
-            if author_id:
-                query = query.filter(Book.author_id == author_id)
 
-            if status:
-                query = query.filter(Book.status == status)
-            
             pagination = query.paginate(
                 page=page, 
                 per_page=per_page, 
