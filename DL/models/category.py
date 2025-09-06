@@ -9,3 +9,9 @@ class Category(db.Model):
 
     books = db.relationship("Book", backref="category", lazy=True)
 
+    def to_dict(self):
+        return {
+            "category_id": self.category_id,
+            "name": self.name
+        }
+
