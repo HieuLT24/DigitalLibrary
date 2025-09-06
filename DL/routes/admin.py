@@ -12,3 +12,8 @@ def admin_requests():
         {"book": "Pride and Prejudice", "user": "Emily Davis", "req_date": "Jun 5, 2023", "due_date": "Jun 19, 2023", "status": "Overdue"}
     ]
     return render_template("admin_templates/admin_requests.html", requests=requests)
+
+
+@admin_bp.route("/add-book")
+def add_book():
+    return render_template("admin_templates/add_book.html")

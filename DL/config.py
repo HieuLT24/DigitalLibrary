@@ -1,16 +1,9 @@
-import os
+from urllib.parse import quote
+
 
 class Config:
-    """Base config class"""
-    SECRET_KEY = os.environ.get('SECRET_KEY') or 'dev-secret-key-change-in-production'
+    SECRET_KEY = "HJGGHD*^&R$YGFGHDYTRER&*TRTYCHG^R&^TYHGH"
     SQLALCHEMY_TRACK_MODIFICATIONS = False
-    
-class DevelopmentConfig(Config):
-    """Development config"""
-    DEBUG = True
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL') or 'sqlite:///dev.db'
-    
-class ProductionConfig(Config):
-    """Production config"""
-    DEBUG = False
-    SQLALCHEMY_DATABASE_URI = os.environ.get('DATABASE_URL')
+    SQLALCHEMY_DATABASE_URI = "mysql+pymysql://root:%s@localhost/librarydb?charset=utf8mb4" % quote(
+    "root")
+
