@@ -1,12 +1,13 @@
 from flask import Blueprint, render_template, request, abort
 
-from DL.models import Book
+from DL.models import Book, db
 
 main_bp = Blueprint('main', __name__)
 
 @main_bp.route("/")
 def index():
-    return render_template("index.html")
+    random_books = Book.query.order_by(db.func.random()).limit(4).all()
+    return render_template("index.html", random_books=random_books)
 
 @main_bp.route("/books")
 def book_list():
@@ -22,7 +23,9 @@ def book_detail(book_id):
     if not book:
         abort(404)
     return render_template("book_detail.html", book=book)
+
 @main_bp.route("/search")
 def search():
     search_query = request.args.get('q', '')
     return render_template("search.html", search_query=search_query, total_results=0)
+

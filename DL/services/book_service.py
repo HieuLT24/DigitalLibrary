@@ -138,3 +138,16 @@ class BookService:
                 'success': False,
                 'message': f'Lỗi khi lấy tác giả: {str(e)}'
             }
+
+    def get_random_books(self, limit=4):
+        try:
+            books = Book.query.order_by(db.func.rand()).limit(limit).all()
+            return {
+                'success': True,
+                'data': [b.to_dict() for b in books]
+            }
+        except Exception as e:
+            return {
+                'success': False,
+                'message': f'Lỗi khi lấy sách ngẫu nhiên: {str(e)}'
+            }
