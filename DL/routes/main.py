@@ -22,3 +22,7 @@ def book_detail(book_id):
     if not book:
         abort(404)
     return render_template("book_detail.html", book=book)
+@main_bp.route("/search")
+def search():
+    search_query = request.args.get('q', '')
+    return render_template("search.html", search_query=search_query, total_results=0)

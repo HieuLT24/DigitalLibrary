@@ -1,0 +1,267 @@
+{% extends 'base.html' %}
+
+{% block title %}Tìm kiếm sách - Thư viện số{% endblock %}
+
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-center mb-4">📚 Kết quả tìm kiếm</h1>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                <h5 class="card-title">🔍 Từ khóa: "<span id="searchQuery">{{ search_query }}</span>"</h5>
+                <p class="text-muted mb-0">Tìm thấy <span id="totalResults">0</span> kết quả</p>
+            </div>
+        </div>
+
+        <div id="loadingSpinner" class="text-center d-none">
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Đang tải...</span>
+            </div>
+            <p class="mt-2">Đang tải kết quả...</p>
+        </div>
+
+        <div id="searchResults">
+            <div id="booksList" class="row">
+            </div>
+            
+            <nav id="pagination" class="mt-4">
+            </nav>
+        </div>
+
+        <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <div id="noResults" class="text-center d-none">
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>Không tìm thấy sách nào</h5>
+                    <p class="text-muted">Hãy thử với từ khóa khác</p>
+                    <a href="/" class="btn btn-primary">Về trang chủ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal fade" id="bookDetailModal" tabindex="-1">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="bookDetailTitle">Chi tiết sách</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body" id="bookDetailContent">
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-primary" id="borrowBookBtn">Mượn sách</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+let currentPage = 1;
+let searchQuery = "{{ search_query }}";
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (searchQuery) {
+        performSearch();
+    } else {
+        showNoResults();
+    }
+});
+
+async function performSearch(page = 1) {
+    showLoading(true);
+    hideResults();
+    
+    try {
+        const result = await apiClient.searchBooks(searchQuery, null, null, page);
+        
+        if (result.success) {
+            displaySearchResults(result.data);
+        } else {
+            showError(result.message);
+        }
+    } catch (error) {
+        showError('Có lỗi xảy ra khi tìm kiếm: ' + error.message);
+    } finally {
+        showLoading(false);
+    }
+}
+
+function displaySearchResults(data) {
+    const books = data.books;
+    const pagination = data.pagination;
+    
+    if (books.length === 0) {
+        showNoResults();
+        return;
+    }
+    
+    document.getElementById('totalResults').textContent = pagination.total;
+    
+    const booksList = document.getElementById('booksList');
+    booksList.innerHTML = '';
+    
+    books.forEach(book => {
+        const bookCard = createBookCard(book);
+        booksList.appendChild(bookCard);
+    });
+    
+    createPagination(pagination);
+    
+    document.getElementById('searchResults').classList.remove('d-none');
+}
+
+function createBookCard(book) {
+    const col = document.createElement('div');
+    col.className = 'col-md-6 col-lg-4 mb-3';
+    
+    col.innerHTML = `
+        <div class="card h-100 book-card" data-book-id="${book.book_id}">
+            <div class="card-body">
+                <h6 class="card-title">${highlightKeyword(book.title, searchQuery)}</h6>
+                <p class="card-text">
+                    <small class="text-muted">
+                        <i class="fas fa-user"></i> ${book.author_name || 'Chưa có tác giả'}<br>
+                        <i class="fas fa-tag"></i> ${book.category_name || 'Chưa có danh mục'}<br>
+                        <i class="fas fa-calendar"></i> ${book.publish_year || 'N/A'}<br>
+                        <i class="fas fa-language"></i> ${book.language || 'N/A'}
+                    </small>
+                </p>
+                <p class="card-text">
+                    <small>${book.description ? book.description.substring(0, 100) + '...' : 'Chưa có mô tả'}</small>
+                </p>
+            </div>
+            <div class="card-footer">
+                <div class="d-flex justify-content-between align-items-center">
+                    <span class="badge ${book.status === 'available' ? 'bg-success' : 'bg-warning'}">
+                        ${book.status === 'available' ? 'Có sẵn' : 'Đã mượn'}
+                    </span>
+                    <button class="btn btn-sm btn-outline-primary" onclick="showBookDetail(${book.book_id})">
+                        <i class="fas fa-eye"></i> Xem chi tiết
+                    </button>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    return col;
+}
+
+function highlightKeyword(text, keyword) {
+    if (!keyword) return text;
+    
+    const regex = new RegExp(`(${keyword})`, 'gi');
+    return text.replace(regex, '<mark>$1</mark>');
+}
+
+async function showBookDetail(bookId) {
+    try {
+        const result = await apiClient.getBookById(bookId);
+        if (result.success) {
+            const book = result.data;
+            
+            document.getElementById('bookDetailTitle').textContent = book.title;
+            document.getElementById('bookDetailContent').innerHTML = `
+                <div class="row">
+                    <div class="col-md-8">
+                        <h6>Thông tin cơ bản</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Tác giả:</strong></td><td>${book.author_name || 'N/A'}</td></tr>
+                            <tr><td><strong>Danh mục:</strong></td><td>${book.category_name || 'N/A'}</td></tr>
+                            <tr><td><strong>Nhà xuất bản:</strong></td><td>${book.publisher || 'N/A'}</td></tr>
+                            <tr><td><strong>Năm xuất bản:</strong></td><td>${book.publish_year || 'N/A'}</td></tr>
+                            <tr><td><strong>Ngôn ngữ:</strong></td><td>${book.language || 'N/A'}</td></tr>
+                            <tr><td><strong>ISBN:</strong></td><td>${book.isbn || 'N/A'}</td></tr>
+                            <tr><td><strong>Số trang:</strong></td><td>${book.page_count || 'N/A'}</td></tr>
+                            <tr><td><strong>Vị trí:</strong></td><td>${book.library_location || 'N/A'}</td></tr>
+                            <tr><td><strong>Trạng thái:</strong></td><td>
+                                <span class="badge ${book.status === 'available' ? 'bg-success' : 'bg-warning'}">
+                                    ${book.status === 'available' ? 'Có sẵn' : 'Đã mượn'}
+                                </span>
+                            </td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-4">
+                        <h6>Mô tả</h6>
+                        <p>${book.description || 'Chưa có mô tả'}</p>
+                    </div>
+                </div>
+            `;
+            
+            const modal = new bootstrap.Modal(document.getElementById('bookDetailModal'));
+            modal.show();
+        }
+    } catch (error) {
+        showError('Không thể tải chi tiết sách: ' + error.message);
+    }
+}
+
+function createPagination(pagination) {
+    const paginationDiv = document.getElementById('pagination');
+    paginationDiv.innerHTML = '';
+    
+    if (pagination.pages <= 1) return;
+    
+    const ul = document.createElement('ul');
+    ul.className = 'pagination justify-content-center';
+    
+    if (pagination.has_prev) {
+        const li = document.createElement('li');
+        li.className = 'page-item';
+        li.innerHTML = `<a class="page-link" href="#" onclick="performSearch(${pagination.page - 1})">Trước</a>`;
+        ul.appendChild(li);
+    }
+    
+    for (let i = 1; i <= pagination.pages; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === pagination.page ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#" onclick="performSearch(${i})">${i}</a>`;
+        ul.appendChild(li);
+    }
+    
+    if (pagination.has_next) {
+        const li = document.createElement('li');
+        li.className = 'page-item';
+        li.innerHTML = `<a class="page-link" href="#" onclick="performSearch(${pagination.page + 1})">Sau</a>`;
+        ul.appendChild(li);
+    }
+    
+    paginationDiv.appendChild(ul);
+}
+
+function showLoading(show) {
+    const spinner = document.getElementById('loadingSpinner');
+    if (show) {
+        spinner.classList.remove('d-none');
+    } else {
+        spinner.classList.add('d-none');
+    }
+}
+
+function showError(message) {
+    document.getElementById('errorText').textContent = message;
+    document.getElementById('errorMessage').classList.remove('d-none');
+    setTimeout(() => {
+        document.getElementById('errorMessage').classList.add('d-none');
+    }, 5000);
+}
+
+function showNoResults() {
+    document.getElementById('noResults').classList.remove('d-none');
+}
+
+function hideResults() {
+    document.getElementById('searchResults').classList.add('d-none');
+    document.getElementById('noResults').classList.add('d-none');
+    document.getElementById('errorMessage').classList.add('d-none');
+}
+</script>
+{% endblock %}
