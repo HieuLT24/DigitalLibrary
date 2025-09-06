@@ -135,7 +135,7 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-
 }
 
 .book-image-container {
-    height: 200px;
+    height: 250px;
     overflow: hidden;
     position: relative;
 }

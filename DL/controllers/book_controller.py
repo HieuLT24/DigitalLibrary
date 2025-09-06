@@ -25,7 +25,7 @@ def search_books():
     try:
         keyword = request.args.get('q', '').strip()
         page = request.args.get('page', 1, type=int)
-        per_page = request.args.get('per_page', 9, type=int)
+        per_page = request.args.get('per_page', 16, type=int)
         
         result = book_service.search_books(
             keyword=keyword,

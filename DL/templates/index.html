@@ -114,8 +114,8 @@ body {
     {% for b in random_books %}
       <div class="book-card">
         <div class="book-cover">
-          {% if b.cover_url %}
-            <img src="{{ b.cover_url }}" alt="{{ b.title }}">
+          {% if b.image %}
+            <img src="{{ b.image }}" alt="{{ b.title }}">
           {% else %}
             <span>NO COVER</span>
           {% endif %}

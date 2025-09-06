@@ -34,8 +34,8 @@ class APIClient {
         return this.request(`/books?page=${page}&per_page=${perPage}`);
     }
 
-    async searchBooks(keyword = '', page = 1) {
-        let url = `/books/search?q=${encodeURIComponent(keyword)}&page=${page}`;
+    async searchBooks(keyword = '', page = 1, perPage = 16) {
+        let url = `/books/search?q=${encodeURIComponent(keyword)}&page=${page}&per_page=${perPage}`;
         return this.request(url);
     }
 
