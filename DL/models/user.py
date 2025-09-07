@@ -14,7 +14,12 @@ class User(db.Model, UserMixin):
     gender = db.Column(db.String(10))
     is_active = db.Column(db.Boolean, default=True)
 
-    borrow_requests = db.relationship("BorrowRequest", backref="user", lazy=True)
+    borrow_requests = db.relationship(
+        "BorrowRequest",
+        back_populates="user",
+        lazy=True,
+        cascade="all, delete-orphan"
+    )
     borrow_slips = db.relationship("BorrowSlip", backref="user", lazy=True)
     notifications = db.relationship("Notification", backref="user", lazy=True)
     
