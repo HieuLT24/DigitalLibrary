@@ -25,3 +25,67 @@
     <div class="topbar-accent"></div>
 </header>
 
+
+<script>
+  (function(){
+    const searchInput = document.getElementById('searchInput');
+    const searchDropdown = document.getElementById('searchDropdown');
+    const searchResults = document.getElementById('searchResults');
+    const searchForm = document.getElementById('searchForm');
+    let debounceTimer = null;
+
+    if (!searchInput) return;
+
+    function showDropdown(){
+      searchDropdown.classList.remove('d-none');
+    }
+
+    function hideDropdown(){
+      searchDropdown.classList.add('d-none');
+    }
+
+    function setLoading(){
+      searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm...</div>';
+      showDropdown();
+    }
+
+    async function fetchQuickResults(q){
+      try {
+        const url = `/search/quick?q=${encodeURIComponent(q)}&limit=5`;
+        const resp = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
+        const html = await resp.text();
+        searchResults.innerHTML = html;
+        showDropdown();
+      } catch (err) {
+        searchResults.innerHTML = '<div class="search-no-results"><i class="fas fa-exclamation-triangle"></i><br>Lỗi tải kết quả</div>';
+        showDropdown();
+      }
+    }
+
+    searchInput.addEventListener('input', function(e){
+      const value = e.target.value.trim();
+      if (debounceTimer) clearTimeout(debounceTimer);
+      if (!value){
+        hideDropdown();
+        return;
+      }
+      debounceTimer = setTimeout(() => {
+        setLoading();
+        fetchQuickResults(value);
+      }, 1000);
+    });
+
+    searchForm.addEventListener('submit', function(e){
+      e.preventDefault();
+      const q = searchInput.value.trim();
+      if (!q){ hideDropdown(); return; }
+      window.location.href = `/search?q=${encodeURIComponent(q)}`;
+    });
+
+    document.addEventListener('click', function(e){
+      if (!e.target.closest('.search-container')){
+        hideDropdown();
+      }
+    });
+  })();
+</script>
