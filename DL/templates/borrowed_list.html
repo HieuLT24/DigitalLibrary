@@ -92,10 +92,10 @@
             <div>Tác giả: {{ s.book.author.name if s.book and s.book.author else '—' }}</div>
             <div>Mã sách: #{{ s.book.book_id if s.book else s.book_id }}</div>
             <div>
-              <span class="badge-inline {% if s.due_date and s.due_date < now().date() %}overdue{% endif %}">
-                {{ 'Quá hạn' if s.due_date and s.due_date < now().date() else 'Đang mượn' }}
+              <span class="badge-inline {% if s.due_date and s.due_date < today %}overdue{% endif %}">
+                {{ 'Quá hạn' if s.due_date and s.due_date < today else 'Đang mượn' }}
               </span>
-              Hạn trả: 
+              Hạn trả:
               {% if s.due_date %}
                 {{ s.due_date.strftime('%d/%m/%Y') }}
               {% else %}
