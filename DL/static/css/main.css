@@ -3,11 +3,11 @@
 body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; line-height: 1.5; }
 /* Topbar */
 .topbar { background: #00bcd4; color: #fff; }
-.topbar-inner { display: flex; align-items: center; gap: 16px; height: 64px; }
+.topbar-inner { display: flex; align-items: center; gap: 16px; height: 64px; justify-content: space-between; }
 .home-icon { text-decoration: none; font-size: 20px; }
 .brand { font-weight: 600; }
-.search-container { position: relative; margin-left: auto; }
-.search { display: flex; gap: 8px; }
+.search-container { position: relative; margin-left: 0; flex: 1 1 auto; }
+.search { display: flex; gap: 8px; max-width: 520px; }
 .search-input-wrapper { position: relative; display: flex; }
 .search input { width: 360px; max-width: 50vw; padding: 8px; border: none; border-radius: 4px; }
 .search button { padding: 8px 12px; border: none; border-radius: 4px; }
@@ -235,6 +235,7 @@ mark {
     border-color: #f5c6cb;
     color: #721c24;
 }
+.top-actions { display: flex; align-items: center; gap: 12px; white-space: nowrap; }
 .top-actions a { color: #fff; text-decoration: none; margin-left: 16px; }
 .top-actions a i { margin-right: 4px; }
 .topbar-accent { height: 4px; background: #008fa1; }
