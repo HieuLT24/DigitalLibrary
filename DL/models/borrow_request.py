@@ -11,13 +11,6 @@ class BorrowRequest(db.Model):
     reject_reason = db.Column(db.String(255))
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
+    book_id = db.Column(db.Integer, db.ForeignKey("book.book_id"), nullable=False)
     
-    def to_dict(self):
-        return {
-            'request_id': self.request_id,
-            'request_date': self.request_date.isoformat() if self.request_date else None,
-            'status': self.status,
-            'reject_reason': self.reject_reason,
-            'user_id': self.user_id,
-            'user_name': self.user.full_name if self.user else None
-        }
+    book = db.relationship("Book", backref="borrow_requests")

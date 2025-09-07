@@ -27,26 +27,3 @@ class Book(db.Model):
     author_id = db.Column(db.Integer, db.ForeignKey("author.author_id"), nullable=False)
     
     borrow_slips = db.relationship("BorrowSlip", backref="book", lazy=True)
-
-    def to_dict(self):
-        return {
-            "book_id": self.book_id,
-            "title": self.title,
-            "publisher": self.publisher,
-            "publish_year": self.publish_year,
-            "language": self.language,
-            "description": self.description,
-            "quantity": self.quantity,
-            "library_location": self.library_location,
-            "weight": self.weight,
-            "size": self.size,
-            "page_count": self.page_count,
-            "cover_type": self.cover_type,
-            "isbn": self.isbn,
-            "image": self.image,
-            "status": self.status,
-            "category_id": self.category_id,
-            "author_id": self.author_id,
-            "author_name": self.author.name if self.author else None,
-            "category_name": self.category.name if self.category else None
-        }

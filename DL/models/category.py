@@ -8,16 +8,5 @@ class Category(db.Model):
     name = db.Column(db.String(100), nullable=False)
 
     books = db.relationship("Book", backref="category", lazy=True)
-    
-    def to_dict(self):
-        return {
-            'category_id': self.category_id,
-            'name': self.name,
-        }
 
-    def to_dict(self):
-        return {
-            "category_id": self.category_id,
-            "name": self.name
-        }
 
