@@ -35,8 +35,4 @@ def create_app():
     app.register_blueprint(user_bp, url_prefix='/user')
     app.register_blueprint(auth_bp, url_prefix='/auth')
     
-    from DL.controllers.book_controller import book_controller
-
-    app.register_blueprint(book_controller, url_prefix='/api')
-    
     return app
