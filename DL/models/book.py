@@ -25,5 +25,11 @@ class Book(db.Model):
 
     category_id = db.Column(db.Integer, db.ForeignKey("category.category_id"), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey("author.author_id"), nullable=False)
-    
+
     borrow_slips = db.relationship("BorrowSlip", backref="book", lazy=True)
+
+    borrow_requests = db.relationship(
+        "BorrowRequest",
+        back_populates="book",
+        lazy=True
+    )

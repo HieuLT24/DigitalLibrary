@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block title %}Khoản mượn của tôi{% endblock %}
+{% block content %}
+<style>
+.loans-wrap{max-width:1080px;margin:32px auto 60px;padding:0 14px;}
+.loans-wrap h2{font-size:24px;font-weight:700;margin:0 0 22px;}
+.section-block{margin-bottom:40px;}
+.section-block h3{font-size:17px;font-weight:700;margin:0 0 14px;text-transform:uppercase;letter-spacing:.5px;}
+.loan-grid{display:grid;gap:16px;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));}
+.loan-card{border:1px solid #d9e2e8;border-radius:12px;padding:14px 14px 12px;background:#fff;display:flex;flex-direction:column;box-shadow:0 2px 6px -2px rgba(0,0,0,.08);transition:.16s;}
+.loan-card:hover{box-shadow:0 6px 18px -6px rgba(0,0,0,.18);border-color:#b9ccd5;}
+.loan-title{font-size:14.5px;font-weight:600;margin:0 0 6px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;}
+.loan-meta{font-size:12px;color:#4d5d67;display:flex;flex-direction:column;gap:2px;margin-bottom:8px;}
+.badge{display:inline-block;font-size:11px;font-weight:600;padding:4px 10px;border-radius:14px;letter-spacing:.4px;}
+.badge-pending{background:#ffe8a3;color:#7a5600;}
+.badge-approved{background:#c5f3d0;color:#155f26;}
+.badge-borrowed{background:#1d86f0;color:#fff;}
+.badge-overdue{background:#d62828;color:#fff;}
+.empty-box{padding:30px 20px;text-align:center;border:2px dashed #b8c6cc;border-radius:14px;background:#f7fbfc;margin:10px 0 0;}
+.empty-box p{margin:4px 0 14px;color:#4d5d67;font-size:13px;}
+.link-detail{margin-top:auto;font-size:12px;text-decoration:none;font-weight:600;color:#1d86f0;}
+.link-detail:hover{text-decoration:underline;}
+  .btn-cancel-req{
+  margin-top:6px;
+  display:inline-block;
+  font-size:11px;
+  font-weight:600;
+  background:#e03131;
+  color:#fff;
+  padding:6px 10px 6px;
+  border-radius:6px;
+  text-decoration:none;
+  border:none;
+  cursor:pointer;
+  letter-spacing:.3px;
+  transition:.15s;
+}
+.btn-cancel-req:hover{
+  background:#c02121;
+</style>
+
+<div class="loans-wrap">
+  <h2>Khoản mượn của tôi</h2>
+
+  <div class="section-block">
+    <h3>Đang mượn</h3>
+    {% if borrowed %}
+      <div class="loan-grid">
+        {% for s in borrowed %}
+          <div class="loan-card">
+            <div class="loan-title" title="{{ s.book.title if s.book else '' }}">{{ s.book.title if s.book else '—' }}</div>
+            <div class="loan-meta">
+              <div>Tác giả: {{ s.book.author.name if s.book and s.book.author else '—' }}</div>
+              <div>
+                <span class="badge {% if s.due_date and s.due_date < now().date() %}badge-overdue{% else %}badge-borrowed{% endif %}">
+                  {% if s.due_date and s.due_date < now().date() %}Quá hạn{% else %}Đang mượn{% endif %}
+                </span>
+                Hạn: {% if s.due_date %}{{ s.due_date.strftime('%d/%m/%Y') }}{% else %}—{% endif %}
+              </div>
+            </div>
+            <a class="link-detail" href="{{ url_for('main.book_detail', book_id=s.book.book_id) if s.book else '#' }}">Chi tiết &raquo;</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-box">
+        <strong>Không có sách đang mượn.</strong>
+        <p>Hãy đăng ký mượn một cuốn sách.</p>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="section-block">
+    <h3>Yêu cầu chờ duyệt</h3>
+    {% if pending %}
+      <div class="loan-grid">
+        {% for r in pending %}
+          <div class="loan-card">
+            <div class="loan-title">{{ r.book.title if r.book else '—' }}</div>
+            <div class="loan-meta">
+              <div>Ngày yêu cầu: {{ r.request_date.strftime('%d/%m/%Y') if r.request_date else '—' }}</div>
+              <div><span class="badge badge-pending">Chờ duyệt</span></div>
+            </div>
+            <a class="link-detail" href="{{ url_for('main.book_detail', book_id=r.book.book_id) if r.book else '#' }}">Chi tiết &raquo;</a>
+
+            <form method="post" action="{{ url_for('user.cancel_request', request_id=r.request_id) }}" onsubmit="return confirm('Hủy yêu cầu này?');">
+              <button type="submit" class="btn-cancel-req">Hủy</button>
+            </form>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-box">
+        <strong>Không có yêu cầu chờ duyệt.</strong>
+      </div>
+    {% endif %}
+  </div>
+
+  <div class="section-block">
+    <h3>Yêu cầu đã duyệt</h3>
+    {% if approved %}
+      <div class="loan-grid">
+        {% for r in approved %}
+          <div class="loan-card">
+            <div class="loan-title">{{ r.book.title if r.book else '—' }}</div>
+            <div class="loan-meta">
+              <div>Ngày yêu cầu: {{ r.request_date.strftime('%d/%m/%Y') if r.request_date else '—' }}</div>
+              <div><span class="badge badge-approved">Đã duyệt</span></div>
+            </div>
+            <a class="link-detail" href="{{ url_for('main.book_detail', book_id=r.book.book_id) if r.book else '#' }}">Chi tiết &raquo;</a>
+          </div>
+        {% endfor %}
+      </div>
+    {% else %}
+      <div class="empty-box">
+        <strong>Chưa có yêu cầu đã duyệt.</strong>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -17,12 +17,24 @@
 .book-left .cover-box img{
   width:100%; height:auto; display:block; border-radius:2px; object-fit:cover;
 }
+
+/* Nút mượn (1 vị trí duy nhất) */
 .btn-borrow{
   display:block; width:100%; margin-top:8px;
   background:#00b4d8; border:none; color:#fff; font-weight:600;
-  padding:10px 14px; border-radius:4px; cursor:pointer; transition:.15s; text-align:center;
+  padding:10px 14px; border-radius:4px; cursor:pointer;
+  transition:.15s; text-align:center; text-decoration:none;
+  font-size:14px; letter-spacing:.3px;
 }
 .btn-borrow:hover{ background:#0293b0; color:#fff; }
+.btn-borrow.disabled{
+  background:#adb5bd; cursor:not-allowed; pointer-events:none;
+}
+.btn-borrow.borrowing{ background:#006d77; }
+.btn-borrow.approved{ background:#2e7d32; }
+.btn-borrow.approved:hover{ background:#286528; }
+.btn-borrow.login-link{ background:#555; }
+.btn-borrow.login-link:hover{ background:#333; }
 
 .book-right{ flex:1; min-width:320px; display:flex; flex-direction:column; gap:14px; }
 
@@ -80,7 +92,35 @@
         <img src="{{ url_for('static', filename='img/placeholder-cover.svg') }}" alt="Bìa sách">
       {% endif %}
     </div>
-    <button class="btn-borrow">Đăng ký mượn sách</button>
+
+    {# -------- NÚT DUY NHẤT: LOGIC THEO TRẠNG THÁI -------- #}
+    {% if current_user.is_authenticated %}
+      {% set st = user_state %}
+      {# Đang mượn #}
+      {% if st and st.is_borrowing %}
+        <button class="btn-borrow borrowing disabled" disabled>Đang mượn</button>
+
+      {# Yêu cầu đang chờ #}
+      {% elif st and st.request_status == 'pending' %}
+        <button class="btn-borrow disabled" disabled>Đang chờ duyệt</button>
+
+      {# Yêu cầu đã duyệt - có thể cho user bấm để xem danh sách yêu cầu #}
+      {% elif st and st.request_status == 'approved' %}
+        <a class="btn-borrow approved" href="{{ url_for('user.request_list') }}">Đã duyệt - Xem</a>
+
+      {# Chưa có yêu cầu/slip #}
+      {% else %}
+        {% if book.quantity is not none and book.quantity <= 0 %}
+          <button class="btn-borrow disabled" disabled>Hết sách</button>
+        {% else %}
+          <form method="post" action="{{ url_for('main.request_borrow', book_id=book.book_id) }}">
+            <button type="submit" class="btn-borrow">Đăng ký mượn sách</button>
+          </form>
+        {% endif %}
+      {% endif %}
+    {% else %}
+      <a class="btn-borrow login-link" href="{{ url_for('auth.login', next=request.path) }}">Đăng nhập để mượn</a>
+    {% endif %}
   </div>
 
   <div class="book-right">
@@ -95,11 +135,11 @@
       <div class="summary-grid">
         <div class="summary-item">
           <span class="label">Tác giả:</span>
-          <span class="value">{% if book.author %}{{ book.author.name }}{% else %}—{% endif %}</span>
+          <span class="value">{{ book.author.name if book.author else '—' }}</span>
         </div>
         <div class="summary-item">
           <span class="label">Danh mục:</span>
-          <span class="value">{% if book.category %}{{ book.category.name }}{% else %}—{% endif %}</span>
+          <span class="value">{{ book.category.name if book.category else '—' }}</span>
         </div>
         <div class="summary-item">
           <span class="label">Nhà xuất bản:</span>
@@ -128,16 +168,15 @@
       </div>
     </div>
 
-    <!-- SPEC FULL -->
     <div class="spec-card">
       <table class="spec-table">
         <tr>
           <th>Tác giả</th>
-          <td>{% if book.author %}{{ book.author.name }}{% else %}—{% endif %}</td>
+          <td>{{ book.author.name if book.author else '—' }}</td>
         </tr>
         <tr>
           <th>Danh mục</th>
-          <td>{% if book.category %}{{ book.category.name }}{% else %}—{% endif %}</td>
+          <td>{{ book.category.name if book.category else '—' }}</td>
         </tr>
         <tr>
           <th>Nhà xuất bản</th>
@@ -188,7 +227,6 @@
   </div>
 </div>
 
-<!-- DESCRIPTION -->
 <div class="description-block">
   <h3>Mô tả sản phẩm</h3>
   {% if book.description %}

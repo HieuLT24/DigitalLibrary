@@ -121,7 +121,29 @@ body { margin: 0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-
     text-align: center;
     color: #666;
 }
-
+.auth-buttons .btn-auth-register{
+  font-weight:600;
+  border:1px solid #ffffff;
+  color:#fff;
+  background:rgba(255,255,255,0.08);
+  backdrop-filter:blur(2px);
+  transition:.18s;
+}
+.auth-buttons .btn-auth-register:hover{
+  background:#ffffff;
+  color:#0089a3;
+  text-decoration:none;
+}
+.auth-buttons .btn-auth-login{
+  font-weight:600;
+  min-width:110px;
+}
+@media (max-width: 768px){
+  .auth-buttons{
+    flex-direction:row;
+  }
+  .auth-buttons .btn{ padding:.4rem .75rem; }
+}
 /* Search Results Page */
 .book-card {
     transition: transform 0.2s, box-shadow 0.2s;
@@ -301,3 +323,202 @@ table.requests th, table.requests td { padding: 10px; border-bottom: 1px solid #
 .btn-success { background: #2e7d32; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; }
 .btn-danger { background: #c62828; color: #fff; border: none; padding: 8px 12px; border-radius: 6px; }
 
+
+.btn-auth {
+  --h:40px;
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  height:var(--h);
+  padding:0 22px;
+  font-size:14px;
+  font-weight:600;
+  line-height:1;
+  text-decoration:none;
+  border-radius:14px;
+  position:relative;
+  border:1px solid transparent;
+  letter-spacing:.2px;
+  cursor:pointer;
+  transition:.22s cubic-bezier(.4,0,.2,1);
+  user-select:none;
+  white-space:nowrap;
+  color:#fff;
+  background:transparent;
+}
+.btn-auth i { font-size:15px; }
+
+/* Đăng ký – xanh lá gradient */
+.btn-green-register {
+  background:linear-gradient(135deg,#26d163,#12a042 60%);
+  border:1px solid #19b654;
+  box-shadow:0 6px 20px -8px rgba(30,160,80,.55);
+}
+.btn-green-register:hover {
+  transform:translateY(-3px);
+  filter:brightness(1.07);
+  box-shadow:0 10px 28px -10px rgba(30,160,80,.7);
+}
+.btn-green-register:active {
+  transform:translateY(-1px) scale(.97);
+}
+
+/* Đăng nhập – xanh dương gradient */
+.btn-blue-login {
+  background:linear-gradient(135deg,#1e8df8,#0d56ac 65%);
+  border:1px solid #1874d6;
+  box-shadow:0 6px 20px -8px rgba(20,110,205,.55);
+}
+.btn-blue-login:hover {
+  transform:translateY(-3px);
+  filter:brightness(1.06);
+  box-shadow:0 10px 28px -10px rgba(20,110,205,.7);
+}
+.btn-blue-login:active {
+  transform:translateY(-1px) scale(.97);
+}
+
+/* Đăng xuất – đỏ */
+.btn-logout-red {
+  background:#e23a2b;
+  border:1px solid #e23a2b;
+  box-shadow:0 4px 14px -6px rgba(226,58,43,.55);
+  color:#fff;
+}
+.btn-logout-red:hover {
+  background:#c9281b;
+  border-color:#c9281b;
+  transform:translateY(-2px);
+  box-shadow:0 8px 22px -10px rgba(201,40,27,.6);
+}
+
+/* Hiệu ứng glow nhẹ (có thể bỏ nếu không thích) */
+.btn-green-register:hover:after,
+.btn-blue-login:hover:after {
+  content:"";
+  position:absolute;
+  inset:0;
+  border-radius:inherit;
+  background:radial-gradient(circle at 30% 30%,rgba(255,255,255,.55),transparent 60%);
+  mix-blend-mode:soft-light;
+  pointer-events:none;
+  opacity:.9;
+  transition:.3s;
+}
+
+/* Focus accessibility */
+.btn-auth:focus-visible {
+  outline:3px solid #ffffff;
+  outline-offset:3px;
+}
+
+/* Responsive giữ icon khi hẹp (nếu muốn) */
+@media (max-width:540px){
+  .btn-auth span { display:none; }
+  .btn-auth { padding:0 14px; --h:36px; }
+}
+
+/* === USER DROPDOWN MENU === */
+.user-menu {
+  position: relative;
+  display: inline-block;
+}
+
+.user-trigger {
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  background:rgba(255,255,255,0.15);
+  color:#ffffff;
+  border:1px solid rgba(255,255,255,0.35);
+  height:40px;
+  padding:0 16px 0 14px;
+  font-size:14px;
+  font-weight:600;
+  border-radius:14px;
+  cursor:pointer;
+  transition:.2s;
+  line-height:1;
+}
+.user-trigger .caret {
+  font-size:12px;
+  transition:.25s;
+  opacity:.9;
+}
+.user-dropdown.open ~ .user-trigger .caret,
+.user-trigger[aria-expanded="true"] .caret {
+  transform:rotate(180deg);
+}
+
+.user-trigger:hover {
+  background:rgba(255,255,255,0.25);
+}
+
+.user-dropdown {
+  position:absolute;
+  top:110%;
+  right:0;
+  min-width:240px;
+  background:#ffffff;
+  color:#1b2730;
+  border:1px solid #d9e2e8;
+  border-radius:14px;
+  box-shadow:0 12px 34px -10px rgba(0,0,0,.25), 0 4px 10px -4px rgba(0,0,0,.18);
+  padding:8px 0;
+  display:none;
+  z-index:50;
+  animation:fadeSlide .18s ease;
+}
+
+.user-dropdown.open { display:block; }
+
+@keyframes fadeSlide {
+  from { opacity:0; transform:translateY(-6px); }
+  to { opacity:1; transform:translateY(0); }
+}
+
+.user-dropdown a {
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:9px 16px 9px 18px;
+  font-size:13.5px;
+  font-weight:500;
+  color:#1d2d35;
+  text-decoration:none;
+  transition:.17s;
+  position:relative;
+}
+
+.user-dropdown a i {
+  width:18px;
+  text-align:center;
+  font-size:14px;
+  opacity:.85;
+}
+
+.user-dropdown a:hover {
+  background:#f0f7fa;
+  color:#0a5666;
+}
+
+.user-dropdown a.logout {
+  color:#b32020;
+  font-weight:600;
+}
+.user-dropdown a.logout:hover {
+  background:#ffe9e9;
+  color:#9b1616;
+}
+
+.user-dropdown .dropdown-divider {
+  height:1px;
+  background:linear-gradient(to right,#dce4ea,#edf2f5);
+  margin:6px 0 6px;
+}
+
+/* Responsive: thu nhỏ */
+@media (max-width:540px){
+  .user-trigger span { display:none; }
+  .user-trigger { padding:0 14px; }
+}

@@ -1,16 +1,24 @@
 <header class="topbar">
     <div class="container topbar-inner">
-        <a class="home-icon" href="{{ url_for('main.index') }}" aria-label="Trang chủ"><i class="fa-solid fa-house"></i></a>
-        <div class="brand">Trang Chủ</div>
+        <!-- Logo / Brand -->
+        <div class="left-block">
+            <a class="home-icon" href="{{ url_for('main.index') }}" aria-label="Trang chủ">
+                <i class="fa-solid fa-house"></i>
+            </a>
+            <span class="brand">Thư viện số</span>
+        </div>
+
+        <!-- Search -->
         <div class="search-container" role="search">
             <form class="search" id="searchForm">
                 <div class="search-input-wrapper">
                     <input type="search" id="searchInput" placeholder="Tìm kiếm sách..." aria-label="Tìm kiếm">
-                    <button type="submit" aria-label="Tìm"><i class="fa-solid fa-magnifying-glass"></i></button>
+                    <button type="submit" aria-label="Tìm">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
                 </div>
                 <div id="searchDropdown" class="search-dropdown d-none">
-                    <div id="searchResults" class="search-results">
-                    </div>
+                    <div id="searchResults" class="search-results"></div>
                     <div class="search-footer">
                         <small class="text-muted">Nhấn Enter để tìm kiếm chi tiết</small>
                     </div>
@@ -24,78 +32,114 @@
                 <i class="fa-solid fa-screwdriver-wrench"></i> Quản trị
             </a>
             {% endif %}
+            <nav class="top-actions">
             {% if current_user.is_authenticated %}
-            <a href="{{ url_for('user.user_profile') }}" aria-label="Tài khoản"><i class="fa-solid fa-user me-1"></i>Tài khoản</a>
-            <a href="{{ url_for('auth.logout') }}" class="btn btn-sm btn-danger ms-2" aria-label="Đăng xuất"><i class="fa-solid fa-right-from-bracket"></i> Đăng xuất</a>
+            {% set display_name = (current_user.full_name or '').strip() or current_user.username %}
+            <div class="user-menu" id="userMenu">
+                <button class="user-trigger" id="userTrigger" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa-solid fa-user"></i>
+                    <span class="name" title="{{ display_name }}">{{ display_name }}</span>
+                    <i class="fa-solid fa-chevron-down caret"></i>
+                </button>
+                <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Menu tài khoản">
+                    <a href="{{ url_for('user.user_profile') }}" role="menuitem">
+                        <i class="fa-regular fa-id-card"></i> Thông tin tài khoản
+                    </a>
+                    <a href="{{ url_for('user.loans_overview') }}" role="menuitem">
+                        <i class="fa-solid fa-book"></i> Khoản mượn của tôi
+                    </a>
+                    <a href="*" role="menuitem">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử mượn trả
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{{ url_for('auth.logout') }}" class="logout" role="menuitem">
+                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                    </a>
+                </div>
+            </div>
             {% else %}
-            <a href="{{ url_for('auth.login') }}" class="btn btn-sm btn-primary ms-2" aria-label="Đăng nhập"><i class="fa-solid fa-right-to-bracket"></i> Đăng nhập</a>
+            <div class="auth-buttons-colored">
+                <a href="{{ url_for('auth.register') }}" class="btn-auth btn-green-register">
+                    <i class="fa-solid fa-user-plus"></i><span>Đăng ký</span>
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="btn-auth btn-blue-login">
+                    <i class="fa-solid fa-right-to-bracket"></i><span>Đăng nhập</span>
+                </a>
+            </div>
             {% endif %}
-        </div>
+        </nav>
     </div>
     <div class="topbar-accent"></div>
 </header>
 
-
 <script>
-  (function(){
-    const searchInput = document.getElementById('searchInput');
-    const searchDropdown = document.getElementById('searchDropdown');
-    const searchResults = document.getElementById('searchResults');
-    const searchForm = document.getElementById('searchForm');
-    let debounceTimer = null;
-
-    if (!searchInput) return;
-
-    function showDropdown(){
-      searchDropdown.classList.remove('d-none');
-    }
-
-    function hideDropdown(){
-      searchDropdown.classList.add('d-none');
-    }
-
-    function setLoading(){
-      searchResults.innerHTML = '<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm...</div>';
-      showDropdown();
-    }
-
-    async function fetchQuickResults(q){
-      try {
-        const url = `/search/quick?q=${encodeURIComponent(q)}&limit=5`;
-        const resp = await fetch(url, { headers: { 'X-Requested-With': 'XMLHttpRequest' } });
-        const html = await resp.text();
-        searchResults.innerHTML = html;
-        showDropdown();
-      } catch (err) {
-        searchResults.innerHTML = '<div class="search-no-results"><i class="fas fa-exclamation-triangle"></i><br>Lỗi tải kết quả</div>';
-        showDropdown();
+    (function(){
+      // (Giữ nguyên logic search cũ)
+      const searchInput = document.getElementById('searchInput');
+      const searchDropdown = document.getElementById('searchDropdown');
+      const searchResults = document.getElementById('searchResults');
+      const searchForm = document.getElementById('searchForm');
+      let debounceTimer=null;
+      if(searchInput){
+        function showDropdown(){ searchDropdown.classList.remove('d-none'); }
+        function hideDropdown(){ searchDropdown.classList.add('d-none'); }
+        function setLoading(){
+          searchResults.innerHTML='<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm...</div>';
+          showDropdown();
+        }
+        async function fetchQuickResults(q){
+          try{
+            const resp=await fetch(`/search/quick?q=${encodeURIComponent(q)}&limit=5`,
+              { headers:{'X-Requested-With':'XMLHttpRequest'} });
+            searchResults.innerHTML=await resp.text();
+            showDropdown();
+          }catch{
+            searchResults.innerHTML='<div class="search-no-results"><i class="fas fa-exclamation-triangle"></i><br>Lỗi tải kết quả</div>';
+            showDropdown();
+          }
+        }
+        searchInput.addEventListener('input',e=>{
+          const v=e.target.value.trim();
+          if(debounceTimer) clearTimeout(debounceTimer);
+          if(!v){ hideDropdown(); return; }
+          debounceTimer=setTimeout(()=>{
+            setLoading();
+              fetchQuickResults(v);
+          },600);
+        });
+        searchForm.addEventListener('submit',e=>{
+          e.preventDefault();
+          const q=searchInput.value.trim();
+          if(!q){ hideDropdown(); return; }
+          window.location.href=`/search?q=${encodeURIComponent(q)}`;
+        });
+        document.addEventListener('click',e=>{
+          if(!e.target.closest('.search-container')) hideDropdown();
+        });
       }
-    }
 
-    searchInput.addEventListener('input', function(e){
-      const value = e.target.value.trim();
-      if (debounceTimer) clearTimeout(debounceTimer);
-      if (!value){
-        hideDropdown();
-        return;
+      // Dropdown toggle
+      const trigger = document.getElementById('userTrigger');
+      const dropdown = document.getElementById('userDropdown');
+      if(trigger && dropdown){
+        function closeMenu(){
+          dropdown.classList.remove('open');
+          trigger.setAttribute('aria-expanded','false');
+        }
+        function openMenu(){
+          dropdown.classList.add('open');
+          trigger.setAttribute('aria-expanded','true');
+        }
+        trigger.addEventListener('click', e=>{
+          e.preventDefault();
+          dropdown.classList.contains('open') ? closeMenu() : openMenu();
+        });
+        document.addEventListener('click', e=>{
+          if(!e.target.closest('#userMenu')) closeMenu();
+        });
+        document.addEventListener('keydown', e=>{
+          if(e.key === 'Escape') closeMenu();
+        });
       }
-      debounceTimer = setTimeout(() => {
-        setLoading();
-        fetchQuickResults(value);
-      }, 1000);
-    });
-
-    searchForm.addEventListener('submit', function(e){
-      e.preventDefault();
-      const q = searchInput.value.trim();
-      if (!q){ hideDropdown(); return; }
-      window.location.href = `/search?q=${encodeURIComponent(q)}`;
-    });
-
-    document.addEventListener('click', function(e){
-      if (!e.target.closest('.search-container')){
-        hideDropdown();
-      }
-    });
-  })();
+    })();
 </script>
