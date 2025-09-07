@@ -1,4 +1,7 @@
 from flask import Blueprint, render_template, redirect, url_for, request, flash
+
+from DL.models import BorrowSlip, Book
+from DL.services.borrow_service import BorrowService
 from DL.services.user_service import UserService
 from flask_login import current_user, login_required
 
@@ -68,3 +71,44 @@ def update_password():
         else:
             flash('Đổi mật khẩu thất bại', 'danger')
     return redirect(url_for('user.user_profile'))
+
+@user_bp.route("/borrowed")
+@login_required
+def borrowed_list():
+    slips = BorrowSlip.query.filter_by(user_id=current_user.user_id, status='borrowed') \
+                            .join(Book, BorrowSlip.book_id == Book.book_id).all()
+    return render_template("borrowed_list.html", slips=slips)
+
+@user_bp.route("/requests")
+@login_required
+def request_list():
+    borrow_service = BorrowService()
+    # Lấy cả pending & approved để user thấy
+    requests = borrow_service.get_user_requests(current_user.user_id, statuses=["pending","approved"])
+    return render_template("request_list.html", requests=requests)
+
+@user_bp.route("/loans")
+@login_required
+def loans_overview():
+    borrow_service = BorrowService()
+    data = borrow_service.get_user_overview(current_user.user_id)
+    return render_template("my_loans.html",
+                           borrowed=data["borrowed"],
+                           pending=data["pending"],
+                           approved=data["approved"])
+
+@user_bp.route("/requests/<int:request_id>/cancel", methods=["POST"])
+@login_required
+def cancel_request(request_id):
+    service = BorrowService()
+    try:
+        service.cancel_request(current_user.user_id, request_id)
+        flash("Đã hủy yêu cầu mượn.", "success")
+    except ValueError as e:
+        code = str(e)
+        msg = {
+            "REQUEST_NOT_FOUND": "Không tìm thấy yêu cầu.",
+            "CANNOT_CANCEL": "Yêu cầu này không thể hủy."
+        }.get(code, "Hủy yêu cầu thất bại.")
+        flash(msg, "danger")
+    return redirect(url_for('user.loans_overview'))

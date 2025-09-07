@@ -1,7 +1,9 @@
-from flask import Blueprint, render_template, request, abort
+from flask import Blueprint, render_template, request, abort, flash, redirect, url_for
+from flask_login import current_user, login_required
 
 from DL.models import Book, db
 from DL.services.book_service import BookService
+from DL.services.borrow_service import BorrowService
 
 main_bp = Blueprint('main', __name__)
 
@@ -22,12 +24,33 @@ def book_list():
 
 @main_bp.route("/book/<int:book_id>")
 def book_detail(book_id):
-    service = BookService()
-    book = service.get_book_by_id(book_id)
+    book_service = BookService()
+    borrow_service = BorrowService()
+    book = book_service.get_book_by_id(book_id)
     if not book:
         abort(404)
-    return render_template("book_detail.html", book=book)
+    user_state = None
+    if current_user.is_authenticated:
+        user_state = borrow_service.get_user_state_for_book(current_user.user_id, book_id)
+    return render_template("book_detail.html", book=book, user_state=user_state)
 
+@main_bp.route("/book/<int:book_id>/request-borrow", methods=["POST"])
+@login_required
+def request_borrow(book_id):
+    borrow_service = BorrowService()
+    try:
+        borrow_service.create_request(current_user.user_id, book_id)
+        flash("Gửi yêu cầu mượn thành công. Vui lòng chờ phê duyệt.", "success")
+    except ValueError as e:
+        code = str(e)
+        msg_map = {
+            "BOOK_NOT_FOUND": "Không tìm thấy sách.",
+            "OUT_OF_STOCK": "Sách đã hết.",
+            "ALREADY_BORROWING": "Bạn đang mượn sách này.",
+            "REQUEST_ALREADY_EXISTS": "Bạn đã có yêu cầu đang chờ / đã duyệt."
+        }
+        flash(msg_map.get(code, "Không thể gửi yêu cầu."), "danger")
+    return redirect(url_for('main.book_detail', book_id=book_id))
 @main_bp.route("/search")
 def search():
     search_query = request.args.get('q', '')
