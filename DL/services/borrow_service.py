@@ -1,7 +1,8 @@
-from datetime import date
+from datetime import date, timedelta
 from DL.models import db, Book, BorrowRequest, BorrowSlip
 
 class BorrowService:
+
     def get_book(self, book_id):
         return Book.query.get(book_id)
 
@@ -18,6 +19,26 @@ class BorrowService:
             BorrowRequest.book_id == book_id,
             BorrowRequest.status.in_(["pending", "approved"])
         ).first()
+
+
+    def get_book_allocation(self, book_id):
+        borrowed_count = BorrowSlip.query.filter(
+            BorrowSlip.book_id == book_id,
+            BorrowSlip.status == "borrowed"
+        ).count()
+        approved_count = BorrowRequest.query.filter(
+            BorrowRequest.book_id == book_id,
+            BorrowRequest.status == "approved"
+        ).count()
+        return borrowed_count, approved_count
+
+    def can_approve_more(self, book: Book):
+        if book.quantity is None:
+            return True
+        borrowed_count, approved_count = self.get_book_allocation(book.book_id)
+        allocated = borrowed_count + approved_count
+        return allocated < book.quantity
+
 
     def create_request(self, user_id, book_id):
         book = self.get_book(book_id)
@@ -40,6 +61,7 @@ class BorrowService:
         db.session.commit()
         return req
 
+
     def get_user_state_for_book(self, user_id, book_id):
         state = {
             "is_borrowing": self.user_is_borrowing(user_id, book_id),
@@ -53,25 +75,44 @@ class BorrowService:
         return state
 
     def get_user_overview(self, user_id):
-        """
-        Trả về dict gồm 3 lists:
-        {
-          borrowed: [BorrowSlip ...],
-          pending: [BorrowRequest ...],
-          approved: [BorrowRequest ...]
-        }
-        """
-        borrowed = BorrowSlip.query.filter_by(user_id=user_id, status="borrowed") \
-                                   .join(Book).order_by(BorrowSlip.slip_id.desc()).all()
-        pending = BorrowRequest.query.filter_by(user_id=user_id, status="pending") \
-                                     .join(Book).order_by(BorrowRequest.request_id.desc()).all()
-        approved = BorrowRequest.query.filter_by(user_id=user_id, status="approved") \
-                                      .join(Book).order_by(BorrowRequest.request_id.desc()).all()
+        borrowed = (BorrowSlip.query
+                    .filter_by(user_id=user_id, status="borrowed")
+                    .join(Book)
+                    .order_by(BorrowSlip.slip_id.desc())
+                    .all())
+
+        pending = (BorrowRequest.query
+                   .filter_by(user_id=user_id, status="pending")
+                   .join(Book)
+                   .order_by(BorrowRequest.request_id.desc())
+                   .all())
+
+        approved = (BorrowRequest.query
+                    .filter_by(user_id=user_id, status="approved")
+                    .join(Book)
+                    .order_by(BorrowRequest.request_id.desc())
+                    .all())
+
+        canceled = (BorrowRequest.query
+                    .filter_by(user_id=user_id, status="canceled")
+                    .join(Book)
+                    .order_by(BorrowRequest.request_id.desc())
+                    .all())
+
+        rejected = (BorrowRequest.query
+                    .filter_by(user_id=user_id, status="rejected")
+                    .join(Book)
+                    .order_by(BorrowRequest.request_id.desc())
+                    .all())
+
         return {
             "borrowed": borrowed,
             "pending": pending,
-            "approved": approved
+            "approved": approved,
+            "canceled": canceled,
+            "rejected": rejected
         }
+
 
     def cancel_request(self, user_id, request_id):
         req = BorrowRequest.query.filter_by(request_id=request_id, user_id=user_id).first()
@@ -82,3 +123,75 @@ class BorrowService:
         req.status = "canceled"
         db.session.commit()
         return req
+
+
+    def approve_request(self, request_id):
+        req = BorrowRequest.query.get(request_id)
+        if not req:
+            raise ValueError("REQUEST_NOT_FOUND")
+        if req.status != "pending":
+            raise ValueError("INVALID_STATE")
+        book = self.get_book(req.book_id)
+        if not book:
+            raise ValueError("BOOK_NOT_FOUND")
+        if not self.can_approve_more(book):
+            raise ValueError("NO_AVAILABLE_QUANTITY")
+        req.status = "approved"
+        db.session.commit()
+        return req
+
+
+    def convert_request_to_slip(self, request_id, loan_days=14):
+        req = BorrowRequest.query.get(request_id)
+        if not req:
+            raise ValueError("REQUEST_NOT_FOUND")
+        if req.status != "approved":
+            raise ValueError("INVALID_STATE")
+        book = self.get_book(req.book_id)
+        if not book:
+            raise ValueError("BOOK_NOT_FOUND")
+        if book.quantity is not None and book.quantity <= 0:
+            raise ValueError("OUT_OF_STOCK")
+
+        slip = BorrowSlip(
+            borrow_date=date.today(),
+            due_date=date.today() + timedelta(days=loan_days),
+            status="borrowed",
+            user_id=req.user_id,
+            book_id=req.book_id
+        )
+        if book.quantity is not None:
+            book.quantity -= 1
+
+        req.status = "converted"
+        db.session.add(slip)
+        db.session.commit()
+        return slip
+
+
+    def reject_request(self, request_id, reason=None):
+        req = BorrowRequest.query.get(request_id)
+        if not req:
+            raise ValueError("REQUEST_NOT_FOUND")
+        if req.status != "pending":
+            raise ValueError("INVALID_STATE")
+        req.status = "rejected"
+        req.reject_reason = reason or "Từ chối"
+        db.session.commit()
+        return req
+
+
+    def get_user_requests(self, user_id, statuses=None, include_canceled=False):
+        q = BorrowRequest.query.filter(BorrowRequest.user_id == user_id)
+        if statuses:
+            q = q.filter(BorrowRequest.status.in_(statuses))
+        else:
+            if not include_canceled:
+                q = q.filter(BorrowRequest.status != "canceled")
+        return q.order_by(BorrowRequest.request_id.desc()).all()
+
+    def list_requests(self, statuses=None):
+        q = BorrowRequest.query
+        if statuses:
+            q = q.filter(BorrowRequest.status.in_(statuses))
+        return q.order_by(BorrowRequest.request_id.desc()).all()

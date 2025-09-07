@@ -1,9 +1,8 @@
 from flask import Blueprint, render_template, abort, request, redirect, url_for, flash
 from flask_login import login_required, current_user
-from datetime import date, timedelta
 
 from DL.models import db, Book, BorrowSlip, User, Category, BorrowRequest
-from sqlalchemy.orm import joinedload
+from DL.services.borrow_service import BorrowService
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -14,10 +13,10 @@ def admin_index():
         return abort(403)
 
     total_books = db.session.query(Book).count()
-    borrowing_books = db.session.query(BorrowSlip).filter(BorrowSlip.status == 'borrowing').count()
+    borrowing_books = db.session.query(BorrowSlip).filter(BorrowSlip.status == 'borrowed').count()
     total_users = db.session.query(User).count()
     total_borrows = db.session.query(BorrowSlip).count()
-    
+
     category_counts = (
         db.session.query(Category.name, db.func.count(Book.book_id))
         .join(Book, Book.category_id == Category.category_id)
@@ -42,10 +41,9 @@ def admin_index():
         'books_by_category_labels': books_by_category_labels,
         'books_by_category_counts': books_by_category_counts,
         'borrow_counts_by_library': [
-            { 'library_location': lib, 'borrow_count': cnt } for lib, cnt in borrow_counts_by_library
+            {'library_location': lib, 'borrow_count': cnt} for lib, cnt in borrow_counts_by_library
         ],
     }
-
     return render_template("admin_templates/statistic.html", stats=stats)
 
 @admin_bp.route("/requests")
@@ -53,82 +51,83 @@ def admin_index():
 def admin_requests():
     if current_user.role != 'admin':
         return abort(403)
-    
-    status_filter = request.args.get('status', 'pending')
-    
-    query = db.session.query(BorrowRequest).options(
-        db.joinedload(BorrowRequest.user),
-        db.joinedload(BorrowRequest.book)
-    )
-    
-    if status_filter in ['pending', 'approved', 'rejected']:
-        query = query.filter(BorrowRequest.status == status_filter)
-    
-    borrow_requests = query.all()
-    
-    pending_count = db.session.query(BorrowRequest).filter(BorrowRequest.status == 'pending').count()
-    approved_count = db.session.query(BorrowRequest).filter(BorrowRequest.status == 'approved').count()
-    rejected_count = db.session.query(BorrowRequest).filter(BorrowRequest.status == 'rejected').count()
-    
-    stats = {
-        'pending_count': pending_count,
-        'approved_count': approved_count,
-        'rejected_count': rejected_count,
-    }
-    
-    return render_template("admin_templates/admin_requests.html",  
-                         requests=borrow_requests, stats=stats, current_filter=status_filter)
 
+    status_filter = request.args.get('status')  # có thể None = all
+    service = BorrowService()
+
+    allowed = ['pending', 'approved', 'rejected', 'converted']
+    if status_filter in allowed:
+        requests = service.list_requests(statuses=[status_filter])
+    else:
+        requests = service.list_requests()
+
+    counts = {st: db.session.query(BorrowRequest).filter(BorrowRequest.status == st).count()
+              for st in allowed}
+
+    return render_template("admin_templates/admin_requests.html",
+                           requests=requests,
+                           counts=counts,
+                           current_filter=status_filter)
 
 @admin_bp.route("/requests/<int:request_id>/approve", methods=['POST'])
 @login_required
 def approve_request(request_id):
     if current_user.role != 'admin':
         return abort(403)
-    
-    borrow_request = BorrowRequest.query.get_or_404(request_id)
-    
-    if borrow_request.status == 'pending':
-        borrow_request.status = 'approved'
-        
-        borrow_slip = BorrowSlip(
-            borrow_date=date.today(),
-            due_date=date.today() + timedelta(days=14),
-            status='borrowing',
-            user_id=borrow_request.user_id,
-            book_id=borrow_request.book_id
-        )
-        
-        db.session.add(borrow_slip)
-        db.session.commit()
-        
-        flash('Đã duyệt yêu cầu mượn sách thành công!', 'success')
-    else:
-        flash('Yêu cầu này đã được xử lý trước đó.', 'warning')
-    
+    service = BorrowService()
+    try:
+        service.approve_request(request_id)
+        flash("Đã duyệt yêu cầu.", "success")
+    except ValueError as e:
+        mapping = {
+            "REQUEST_NOT_FOUND": "Không tìm thấy yêu cầu.",
+            "INVALID_STATE": "Trạng thái không hợp lệ.",
+            "BOOK_NOT_FOUND": "Không tìm thấy sách.",
+            "NO_AVAILABLE_QUANTITY": "Không còn suất để duyệt (đã đủ số lượng)."
+        }
+        flash(mapping.get(str(e), "Duyệt thất bại."), "danger")
     return redirect(url_for('admin.admin_requests', status='pending'))
+
+@admin_bp.route("/requests/<int:request_id>/convert", methods=['POST'])
+@login_required
+def convert_request(request_id):
+    if current_user.role != 'admin':
+        return abort(403)
+    service = BorrowService()
+    try:
+        service.convert_request_to_slip(request_id)
+        flash("Đã tạo phiếu mượn (giao sách).", "success")
+    except ValueError as e:
+        mapping = {
+            "REQUEST_NOT_FOUND": "Không tìm thấy yêu cầu.",
+            "INVALID_STATE": "Yêu cầu không ở trạng thái đã duyệt.",
+            "BOOK_NOT_FOUND": "Không tìm thấy sách.",
+            "OUT_OF_STOCK": "Sách đã hết khi giao."
+        }
+        flash(mapping.get(str(e), "Tạo phiếu thất bại."), "danger")
+    return redirect(url_for('admin.admin_requests', status='approved'))
 
 @admin_bp.route("/requests/<int:request_id>/reject", methods=['POST'])
 @login_required
 def reject_request(request_id):
     if current_user.role != 'admin':
         return abort(403)
-    
-    borrow_request = BorrowRequest.query.get_or_404(request_id)
-    reject_reason = request.form.get('reject_reason', '')
-    
-    if borrow_request.status == 'pending':
-        borrow_request.status = 'rejected'
-        borrow_request.reject_reason = reject_reason
-        
-        db.session.commit()
-        
-        flash('Đã từ chối yêu cầu mượn sách.', 'info')
-    else:
-        flash('Yêu cầu này đã được xử lý trước đó.', 'warning')
-    
+    service = BorrowService()
+    reason = request.form.get('reject_reason') or None
+    try:
+        service.reject_request(request_id, reason)
+        flash("Đã từ chối yêu cầu.", "info")
+    except ValueError as e:
+        mapping = {
+            "REQUEST_NOT_FOUND": "Không tìm thấy yêu cầu.",
+            "INVALID_STATE": "Trạng thái không hợp lệ."
+        }
+        flash(mapping.get(str(e), "Từ chối thất bại."), "danger")
     return redirect(url_for('admin.admin_requests', status='pending'))
 
 @admin_bp.route("/add-book")
+@login_required
 def add_book():
+    if current_user.role != 'admin':
+        return abort(403)
     return render_template("admin_templates/add_book.html")

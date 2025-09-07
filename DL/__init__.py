@@ -23,6 +23,15 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    @app.context_processor
+    def inject_time_helpers():
+        from datetime import datetime, date
+        return {
+            'now': datetime.utcnow,
+            'today': date.today()
+        }
+
     from DL import models
     
     from DL.routes.main import main_bp
