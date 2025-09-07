@@ -13,5 +13,5 @@ class BorrowRequest(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey("book.book_id"), nullable=False)
 
-    book = db.relationship("Book", backref="borrow_requests")
+    book = db.relationship("Book", back_populates="borrow_requests")
     user = db.relationship("User", back_populates="borrow_requests")
