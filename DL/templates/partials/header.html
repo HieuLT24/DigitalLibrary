@@ -25,9 +25,14 @@
                 </div>
             </form>
         </div>
-
-        <!-- Actions -->
-        <nav class="top-actions">
+        <div class="top-actions">
+            <a href="#" aria-label="Danh sách chờ duyệt"><i class="fa-solid fa-list-check me-1"></i>Danh sách chờ duyệt</a>
+            {% if current_user.is_authenticated and current_user.role == 'admin' %}
+            <a href="{{ url_for('admin.admin_index') }}" class="btn btn-sm btn-outline-secondary ms-2" aria-label="Quản trị">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Quản trị
+            </a>
+            {% endif %}
+            <nav class="top-actions">
             {% if current_user.is_authenticated %}
             {% set display_name = (current_user.full_name or '').strip() or current_user.username %}
             <div class="user-menu" id="userMenu">

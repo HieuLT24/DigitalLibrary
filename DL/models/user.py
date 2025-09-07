@@ -22,17 +22,12 @@ class User(db.Model, UserMixin):
     )
     borrow_slips = db.relationship("BorrowSlip", backref="user", lazy=True)
     notifications = db.relationship("Notification", backref="user", lazy=True)
-    
+
+    @property
+    def id(self):
+        return self.user_id
+
     def get_id(self):
         return str(self.user_id)
 
-    def to_dict(self):
-        return {
-            'user_id': self.user_id,
-            'full_name': self.full_name,
-            'email': self.email,
-            'username': self.username,
-            'role': self.role,
-            'status': self.status
-        }
 

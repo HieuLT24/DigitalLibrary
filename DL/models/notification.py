@@ -11,14 +11,5 @@ class Notification(db.Model):
     type = db.Column(db.String(50))
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
-    
-    def to_dict(self):
-        return {
-            'notification_id': self.notification_id,
-            'content': self.content,
-            'sent_date': self.sent_date.isoformat() if self.sent_date else None,
-            'type': self.type,
-            'user_id': self.user_id,
-            'user_name': self.user.full_name if self.user else None
-        }
+
 
