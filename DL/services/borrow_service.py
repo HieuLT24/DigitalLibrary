@@ -2,7 +2,7 @@ from datetime import date, timedelta
 from DL.models import db, Book, BorrowRequest, BorrowSlip
 
 class BorrowService:
-
+    # ------------------ Helpers ------------------
     def get_book(self, book_id):
         return Book.query.get(book_id)
 
@@ -20,7 +20,7 @@ class BorrowService:
             BorrowRequest.status.in_(["pending", "approved"])
         ).first()
 
-
+    # ------------------ Allocation ------------------
     def get_book_allocation(self, book_id):
         borrowed_count = BorrowSlip.query.filter(
             BorrowSlip.book_id == book_id,
@@ -39,7 +39,21 @@ class BorrowService:
         allocated = borrowed_count + approved_count
         return allocated < book.quantity
 
+    # ------------------ NEW: cập nhật trạng thái sách ------------------
+    def update_book_status(self, book: Book):
+        """
+        Điều chỉnh tuỳ theo logic bạn muốn. Ở đây:
+        - Nếu quantity is None => always available
+        - Nếu quantity > 0 => available, else out_of_stock
+        """
+        if not hasattr(book, 'status'):
+            return
+        if book.quantity is None:
+            book.status = 'available'
+        else:
+            book.status = 'available' if book.quantity > 0 else 'out_of_stock'
 
+    # ------------------ User: tạo request ------------------
     def create_request(self, user_id, book_id):
         book = self.get_book(book_id)
         if not book:
@@ -50,7 +64,6 @@ class BorrowService:
             raise ValueError("ALREADY_BORROWING")
         if self.get_existing_active_request(user_id, book_id):
             raise ValueError("REQUEST_ALREADY_EXISTS")
-
         req = BorrowRequest(
             request_date=date.today(),
             status="pending",
@@ -61,7 +74,7 @@ class BorrowService:
         db.session.commit()
         return req
 
-
+    # ------------------ UI state ------------------
     def get_user_state_for_book(self, user_id, book_id):
         state = {
             "is_borrowing": self.user_is_borrowing(user_id, book_id),
@@ -74,6 +87,7 @@ class BorrowService:
             state["request_id"] = req.request_id
         return state
 
+    # ------------------ Overview user loans ------------------
     def get_user_overview(self, user_id):
         borrowed = (BorrowSlip.query
                     .filter_by(user_id=user_id, status="borrowed")
@@ -113,18 +127,20 @@ class BorrowService:
             "rejected": rejected
         }
 
-
+    # ------------------ User cancel ------------------
     def cancel_request(self, user_id, request_id):
         req = BorrowRequest.query.filter_by(request_id=request_id, user_id=user_id).first()
         if not req:
             raise ValueError("REQUEST_NOT_FOUND")
         if req.status != "pending":
+            # Nếu muốn cho hủy cả approved: thay bằng
+            # if req.status not in ("pending","approved"):
             raise ValueError("CANNOT_CANCEL")
         req.status = "canceled"
         db.session.commit()
         return req
 
-
+    # ------------------ Admin approve ------------------
     def approve_request(self, request_id):
         req = BorrowRequest.query.get(request_id)
         if not req:
@@ -140,7 +156,7 @@ class BorrowService:
         db.session.commit()
         return req
 
-
+    # ------------------ Admin convert (giao) ------------------
     def convert_request_to_slip(self, request_id, loan_days=14):
         req = BorrowRequest.query.get(request_id)
         if not req:
@@ -162,13 +178,14 @@ class BorrowService:
         )
         if book.quantity is not None:
             book.quantity -= 1
+        self.update_book_status(book)
 
         req.status = "converted"
         db.session.add(slip)
         db.session.commit()
         return slip
 
-
+    # ------------------ Admin reject ------------------
     def reject_request(self, request_id, reason=None):
         req = BorrowRequest.query.get(request_id)
         if not req:
@@ -180,7 +197,7 @@ class BorrowService:
         db.session.commit()
         return req
 
-
+    # ------------------ Listing requests ------------------
     def get_user_requests(self, user_id, statuses=None, include_canceled=False):
         q = BorrowRequest.query.filter(BorrowRequest.user_id == user_id)
         if statuses:
@@ -195,3 +212,59 @@ class BorrowService:
         if statuses:
             q = q.filter(BorrowRequest.status.in_(statuses))
         return q.order_by(BorrowRequest.request_id.desc()).all()
+
+    # ------------------ NEW: Borrow history ------------------
+    def get_borrow_history(self, user_id, statuses=None):
+        q = BorrowSlip.query.filter(BorrowSlip.user_id == user_id)
+        if statuses:
+            q = q.filter(BorrowSlip.status.in_(statuses))
+        return (q.join(Book)
+                 .order_by(
+                     db.case((BorrowSlip.status == 'borrowed', 0), else_=1),
+                     BorrowSlip.borrow_date.desc()
+                 ).all())
+
+    # ------------------ NEW: Return book ------------------
+    def return_book(self, slip_id):
+        slip = BorrowSlip.query.get(slip_id)
+        if not slip:
+            raise ValueError("SLIP_NOT_FOUND")
+        if slip.status != "borrowed":
+            raise ValueError("INVALID_STATE")
+        book = self.get_book(slip.book_id)
+        slip.status = "returned"
+        slip.return_date = date.today()
+        if book and book.quantity is not None:
+            book.quantity += 1
+            self.update_book_status(book)
+        db.session.commit()
+        return slip
+
+    # ------------------ NEW: Lost / Damaged ------------------
+    def mark_lost(self, slip_id):
+        slip = BorrowSlip.query.get(slip_id)
+        if not slip:
+            raise ValueError("SLIP_NOT_FOUND")
+        if slip.status != "borrowed":
+            raise ValueError("INVALID_STATE")
+        slip.status = "lost"
+        slip.return_date = date.today()
+        book = self.get_book(slip.book_id)
+        if book:
+            self.update_book_status(book)
+        db.session.commit()
+        return slip
+
+    def mark_damaged(self, slip_id):
+        slip = BorrowSlip.query.get(slip_id)
+        if not slip:
+            raise ValueError("SLIP_NOT_FOUND")
+        if slip.status != "borrowed":
+            raise ValueError("INVALID_STATE")
+        slip.status = "damaged"
+        slip.return_date = date.today()
+        book = self.get_book(slip.book_id)
+        if book:
+            self.update_book_status(book)
+        db.session.commit()
+        return slip

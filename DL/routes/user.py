@@ -1,3 +1,5 @@
+from datetime import date
+
 from flask import Blueprint, render_template, redirect, url_for, request, flash
 from flask_login import current_user, login_required
 
@@ -163,3 +165,27 @@ def cancel_request(request_id):
         }.get(code, "Hủy yêu cầu thất bại.")
         flash(msg, "danger")
     return redirect(url_for('user.loans_overview'))
+
+@user_bp.route("/history")
+@login_required
+def borrow_history():
+    """
+    Lịch sử mượn – trả của người dùng.
+    Query param:
+      ?status=all (mặc định) | borrowed | returned | lost | damaged
+    """
+    status = request.args.get("status", "all")
+    service = BorrowService()
+
+    allowed = ["borrowed", "returned", "lost", "damaged"]
+    if status in allowed:
+        slips = service.get_borrow_history(current_user.user_id, statuses=[status])
+    else:
+        slips = service.get_borrow_history(current_user.user_id)  # tất cả
+
+    return render_template(
+        "borrow_history.html",
+        slips=slips,
+        current_filter=status,
+        today=date.today()
+    )
