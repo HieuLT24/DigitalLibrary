@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, request, abort, flash, redirect, url_for
+from flask import Blueprint, render_template, request, abort, flash, redirect, url_for, jsonify
 from flask_login import current_user, login_required
 
 from DL.models import Book, db
@@ -54,20 +54,52 @@ def request_borrow(book_id):
 @main_bp.route("/search")
 def search():
     search_query = request.args.get('q', '')
+    library = request.args.get('library', '')
+    category = request.args.get('category', '')
+    author = request.args.get('author', '')
+    language = request.args.get('language', '')
+    status = request.args.get('status', '')
+    
     page = request.args.get('page', 1, type=int)
     per_page = request.args.get('per_page', 16, type=int)
+    
+    filters = {}
+    if library: filters['library'] = library
+    if category: filters['category'] = int(category) if category.isdigit() else category
+    if author: filters['author'] = int(author) if author.isdigit() else author
+    if language: filters['language'] = language
+    if status: filters['status'] = status
+    
     service = BookService()
-    pagination = service.search_books(keyword=search_query, page=page, per_page=per_page)
-    return render_template("search.html", search_query=search_query, pagination=pagination, books=pagination.items)
+    
+    if not search_query and not filters:
+        pagination = service.get_paginated_books(page=page, per_page=per_page, order_desc=True)
+    else:
+        pagination = service.search_books(keyword=search_query, filters=filters, page=page, per_page=per_page)
+    
+    # Get filter options for display
+    filter_options = service.get_filter_options()
+    
+    return render_template("search.html", 
+                         search_query=search_query, 
+                         pagination=pagination, 
+                         books=pagination.items,
+                         filters=filters,
+                         filter_options=filter_options)
 
 
 @main_bp.route("/search/quick")
 def search_quick():
-    """Trả về HTML nhỏ (partial) gồm tối đa 5 sách phù hợp để hiển thị dropdown nhanh."""
     keyword = request.args.get('q', '').strip()
     limit = request.args.get('limit', 5, type=int)
     service = BookService()
     pagination = service.search_books(keyword=keyword, page=1, per_page=limit)
     books = pagination.items if pagination else []
     return render_template("partials/quick_search_items.html", books=books)
+
+@main_bp.route("/api/filter-options")
+def filter_options():
+    service = BookService()
+    options = service.get_filter_options()
+    return jsonify(options)
 
