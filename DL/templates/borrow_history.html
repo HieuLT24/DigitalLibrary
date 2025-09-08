@@ -1,0 +1,166 @@
+{% extends 'base.html' %}
+{% block title %}Lịch sử mượn – trả{% endblock %}
+{% block content %}
+<style>
+.history-wrap{max-width:1160px;margin:32px auto 70px;padding:0 16px;}
+.history-wrap h2{font-size:24px;font-weight:700;margin:0 0 26px;letter-spacing:.5px;}
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:20px;}
+.filter-bar a{
+  text-decoration:none;
+  padding:8px 16px;
+  border:1px solid #d0d7de;
+  border-radius:24px;
+  font-size:13px;
+  font-weight:600;
+  color:#374049;
+  background:#fff;
+  letter-spacing:.4px;
+  transition:.15s;
+}
+.filter-bar a.active,
+.filter-bar a:hover{
+  background:#1d86f0;
+  border-color:#1d86f0;
+  color:#fff;
+}
+
+.history-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:13.5px;
+  background:#fff;
+  border:1px solid #dfe4e8;
+  border-radius:12px;
+  overflow:hidden;
+  box-shadow:0 2px 6px -2px rgba(0,0,0,.08);
+}
+.history-table th,
+.history-table td{
+  padding:11px 14px;
+  vertical-align:middle;
+  border-bottom:1px solid #eef1f3;
+}
+.history-table th{
+  background:#f5f7f9;
+  text-align:left;
+  font-size:12px;
+  font-weight:600;
+  letter-spacing:.6px;
+  text-transform:uppercase;
+  color:#56636d;
+}
+.history-table tr:last-child td{border-bottom:none;}
+
+.badge{
+  display:inline-block;
+  font-size:11px;
+  font-weight:600;
+  padding:4px 10px;
+  border-radius:14px;
+  letter-spacing:.4px;
+  line-height:1;
+}
+.badge-borrowed{background:#1d86f0;color:#fff;}
+.badge-overdue{background:#d62828;color:#fff;}
+.badge-returned{background:#2dba4e;color:#fff;}
+.badge-lost{background:#444;color:#eee;}
+.badge-damaged{background:#ff9800;color:#fff;}
+
+.note-late{font-size:11px;color:#d62828;font-weight:600;}
+.empty-box{
+  padding:38px 24px;
+  text-align:center;
+  border:2px dashed #b8c6cc;
+  border-radius:14px;
+  background:#f7fbfc;
+  margin-top:24px;
+  font-size:13px;
+  color:#4d5d67;
+}
+
+@media (max-width:860px){
+  .history-table th:nth-child(1),
+  .history-table td:nth-child(1){display:none;}
+  .history-table th:nth-child(8),
+  .history-table td:nth-child(8){display:none;}
+}
+@media (max-width:640px){
+  .history-table{font-size:12.5px;}
+  .history-table th,
+  .history-table td{padding:9px 10px;}
+  .history-wrap h2{font-size:21px;}
+}
+</style>
+
+<div class="history-wrap">
+  <h2>Lịch sử mượn – trả</h2>
+
+  <div class="filter-bar">
+    <a href="{{ url_for('user.borrow_history', status='all') }}" class="{{ 'active' if current_filter=='all' else '' }}">Tất cả</a>
+    <a href="{{ url_for('user.borrow_history', status='borrowed') }}" class="{{ 'active' if current_filter=='borrowed' else '' }}">Đang mượn</a>
+    <a href="{{ url_for('user.borrow_history', status='returned') }}" class="{{ 'active' if current_filter=='returned' else '' }}">Đã trả</a>
+    <a href="{{ url_for('user.borrow_history', status='lost') }}" class="{{ 'active' if current_filter=='lost' else '' }}">Mất</a>
+    <a href="{{ url_for('user.borrow_history', status='damaged') }}" class="{{ 'active' if current_filter=='damaged' else '' }}">Hư hỏng</a>
+  </div>
+
+  {% if slips %}
+    <table class="history-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Sách</th>
+          <th>Ngày mượn</th>
+            <th>Hạn trả</th>
+          <th>Ngày trả</th>
+          <th>Trạng thái</th>
+          <th>Ghi chú</th>
+          <th>Thư viện</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in slips %}
+          {% set is_overdue = (s.status == 'borrowed' and s.due_date and today > s.due_date) %}
+          {% set returned_late = (s.status == 'returned' and s.return_date and s.due_date and s.return_date > s.due_date) %}
+          <tr>
+            <td>{{ s.slip_id }}</td>
+            <td>
+              {% if s.book %}
+                <a href="{{ url_for('main.book_detail', book_id=s.book.book_id) }}">{{ s.book.title }}</a>
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ s.borrow_date.strftime('%d/%m/%Y') if s.borrow_date else '—' }}</td>
+            <td>{{ s.due_date.strftime('%d/%m/%Y') if s.due_date else '—' }}</td>
+            <td>{{ s.return_date.strftime('%d/%m/%Y') if s.return_date else '—' }}</td>
+            <td>
+              {% if s.status == 'borrowed' %}
+                <span class="badge {{ 'badge-overdue' if is_overdue else 'badge-borrowed' }}">{{ 'Quá hạn' if is_overdue else 'Đang mượn' }}</span>
+              {% elif s.status == 'returned' %}
+                <span class="badge badge-returned">Đã trả</span>
+              {% elif s.status == 'lost' %}
+                <span class="badge badge-lost">Mất</span>
+              {% elif s.status == 'damaged' %}
+                <span class="badge badge-damaged">Hư hỏng</span>
+              {% else %}
+                <span class="badge">{{ s.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              {% if is_overdue %}
+                <span class="note-late">Trễ {{ (today - s.due_date).days }} ngày</span>
+              {% elif returned_late %}
+                <span class="note-late">Trả trễ {{ (s.return_date - s.due_date).days }} ngày</span>
+              {% else %}—{% endif %}
+            </td>
+            <td>{{ s.book.library_location if s.book and s.book.library_location else '—' }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-box">
+      <strong>Chưa có lịch sử mượn.</strong>
+      <div>Bạn chưa từng mượn sách nào hoặc dữ liệu trống.</div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

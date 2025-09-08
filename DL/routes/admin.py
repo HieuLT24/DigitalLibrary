@@ -1,5 +1,6 @@
 from flask import Blueprint, render_template, abort, request, redirect, url_for, flash
 from flask_login import login_required, current_user
+from datetime import date
 
 from DL.models import db, Book, BorrowSlip, User, Category, BorrowRequest
 from DL.services.borrow_service import BorrowService
@@ -131,3 +132,84 @@ def add_book():
     if current_user.role != 'admin':
         return abort(403)
     return render_template("admin_templates/add_book.html")
+
+@admin_bp.route("/slips")
+@login_required
+def admin_slips():
+    if current_user.role != 'admin':
+        return abort(403)
+    status_filter = request.args.get("status", "borrowed")
+    q = BorrowSlip.query.join(Book)
+    if status_filter == "borrowed":
+        q = q.filter(BorrowSlip.status == "borrowed")
+    elif status_filter == "returned":
+        q = q.filter(BorrowSlip.status == "returned")
+    elif status_filter == "lost":
+        q = q.filter(BorrowSlip.status == "lost")
+    elif status_filter == "damaged":
+        q = q.filter(BorrowSlip.status == "damaged")
+    elif status_filter == "all":
+        pass
+    else:
+        q = q.filter(BorrowSlip.status == status_filter)
+
+    slips = q.order_by(BorrowSlip.slip_id.desc()).all()
+    counts = {
+        "borrowed": BorrowSlip.query.filter(BorrowSlip.status == "borrowed").count(),
+        "returned": BorrowSlip.query.filter(BorrowSlip.status == "returned").count(),
+        "lost": BorrowSlip.query.filter(BorrowSlip.status == "lost").count(),
+        "damaged": BorrowSlip.query.filter(BorrowSlip.status == "damaged").count(),
+    }
+    return render_template("admin_templates/admin_slips.html",
+                           slips=slips,
+                           counts=counts,
+                           current_filter=status_filter,
+                           today=date.today())
+
+@admin_bp.route("/slips/<int:slip_id>/return", methods=["POST"])
+@login_required
+def admin_return_slip(slip_id):
+    if current_user.role != 'admin':
+        return abort(403)
+    service = BorrowService()
+    try:
+        service.return_book(slip_id)
+        flash("Đã đánh dấu trả sách.", "success")
+    except ValueError as e:
+        flash({
+            "SLIP_NOT_FOUND": "Không tìm thấy phiếu.",
+            "INVALID_STATE": "Phiếu không ở trạng thái đang mượn."
+        }.get(str(e), "Trả sách thất bại."), "danger")
+    return redirect(request.referrer or url_for('admin.admin_slips'))
+
+@admin_bp.route("/slips/<int:slip_id>/lost", methods=["POST"])
+@login_required
+def admin_mark_lost(slip_id):
+    if current_user.role != 'admin':
+        return abort(403)
+    service = BorrowService()
+    try:
+        service.mark_lost(slip_id)
+        flash("Đã đánh dấu MẤT.", "warning")
+    except ValueError as e:
+        flash({
+            "SLIP_NOT_FOUND": "Không tìm thấy phiếu.",
+            "INVALID_STATE": "Phiếu không ở trạng thái đang mượn."
+        }.get(str(e), "Cập nhật thất bại."), "danger")
+    return redirect(request.referrer or url_for('admin.admin_slips'))
+
+@admin_bp.route("/slips/<int:slip_id>/damaged", methods=["POST"])
+@login_required
+def admin_mark_damaged(slip_id):
+    if current_user.role != 'admin':
+        return abort(403)
+    service = BorrowService()
+    try:
+        service.mark_damaged(slip_id)
+        flash("Đã đánh dấu HƯ HỎNG.", "warning")
+    except ValueError as e:
+        flash({
+            "SLIP_NOT_FOUND": "Không tìm thấy phiếu.",
+            "INVALID_STATE": "Phiếu không ở trạng thái đang mượn."
+        }.get(str(e), "Cập nhật thất bại."), "danger")
+    return redirect(request.referrer or url_for('admin.admin_slips'))
