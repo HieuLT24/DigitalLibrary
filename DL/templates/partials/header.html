@@ -26,7 +26,9 @@
             </form>
         </div>
         <div class="top-actions">
-            <a href="#" aria-label="Danh sách chờ duyệt"><i class="fa-solid fa-list-check me-1"></i>Danh sách chờ duyệt</a>
+            <button id="filterToggle" class="btn btn-outline-primary" aria-label="Bộ lọc tìm kiếm">
+                <i class="fa-solid fa-filter me-1"></i>Bộ lọc
+            </button>
             {% if current_user.is_authenticated and current_user.role == 'admin' %}
             <a href="{{ url_for('admin.admin_index') }}" class="btn btn-sm btn-outline-secondary ms-2" aria-label="Quản trị">
                 <i class="fa-solid fa-screwdriver-wrench"></i> Quản trị
@@ -71,6 +73,78 @@
     </div>
     <div class="topbar-accent"></div>
 </header>
+
+<!-- Filter Modal -->
+<div id="filterModal" class="filter-modal d-none">
+    <div class="filter-modal-content">
+        <div class="filter-header">
+            <h5><i class="fa-solid fa-filter"></i> Bộ lọc tìm kiếm</h5>
+            <button id="closeFilter" class="btn-close" aria-label="Đóng">&times;</button>
+        </div>
+        <div class="filter-body">
+            <form id="filterForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="filterKeyword" class="form-label">Từ khóa</label>
+                        <input type="text" id="filterKeyword" class="form-control" placeholder="Nhập từ khóa tìm kiếm...">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="filterLibrary" class="form-label">Thư viện</label>
+                        <select id="filterLibrary" class="form-select">
+                            <option value="">Tất cả thư viện</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="filterCategory" class="form-label">Danh mục</label>
+                        <select id="filterCategory" class="form-select">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="filterAuthor" class="form-label">Tác giả</label>
+                        <select id="filterAuthor" class="form-select">
+                            <option value="">Tất cả tác giả</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="filterLanguage" class="form-label">Ngôn ngữ</label>
+                        <select id="filterLanguage" class="form-select">
+                            <option value="">Tất cả ngôn ngữ</option>
+                            <option value="Vietnamese">Tiếng Việt</option>
+                            <option value="English">Tiếng Anh</option>
+                            <option value="Japanese">Tiếng Nhật</option>
+                            <option value="French">Tiếng Pháp</option>
+                            <option value="Spanish">Tiếng Tây Ban Nha</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="filterStatus" class="form-label">Trạng thái</label>
+                        <select id="filterStatus" class="form-select">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="available">Có sẵn</option>
+                            <option value="borrowed">Đã mượn</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="button" id="clearFilters" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-eraser"></i> Xóa bộ lọc
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-search"></i> Tìm kiếm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
 
 <script>
     (function(){
@@ -140,6 +214,110 @@
         document.addEventListener('keydown', e=>{
           if(e.key === 'Escape') closeMenu();
         });
+      }
+
+      const filterToggle = document.getElementById('filterToggle');
+      const filterModal = document.getElementById('filterModal');
+      const closeFilter = document.getElementById('closeFilter');
+      const filterForm = document.getElementById('filterForm');
+      const clearFilters = document.getElementById('clearFilters');
+
+      if(filterToggle && filterModal) {
+        filterToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          filterModal.classList.remove('d-none');
+          document.body.style.overflow = 'hidden';
+          loadFilterOptions();
+        });
+
+        function closeFilterModal() {
+          filterModal.classList.add('d-none');
+          document.body.style.overflow = 'auto';
+        }
+
+        closeFilter.addEventListener('click', closeFilterModal);
+        
+        filterModal.addEventListener('click', function(e) {
+          if(e.target === filterModal) {
+            closeFilterModal();
+          }
+        });
+
+        document.addEventListener('keydown', function(e) {
+          if(e.key === 'Escape' && !filterModal.classList.contains('d-none')) {
+            closeFilterModal();
+          }
+        });
+
+        clearFilters.addEventListener('click', function() {
+          filterForm.reset();
+          window.location.href = '/search';
+        });
+
+        filterForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          performFilterSearch();
+        });
+
+        async function loadFilterOptions() {
+          try {
+            const response = await fetch('/api/filter-options');
+            if(response.ok) {
+              const data = await response.json();
+              populateFilterOptions(data);
+            }
+          } catch(error) {
+            console.error('Error loading filter options:', error);
+          }
+        }
+
+        function populateFilterOptions(data) {
+          const categorySelect = document.getElementById('filterCategory');
+          if(data.categories) {
+            categorySelect.innerHTML = '<option value="">Tất cả danh mục</option>';
+            data.categories.forEach(category => {
+              categorySelect.innerHTML += `<option value="${category.category_id}">${category.name}</option>`;
+            });
+          }
+
+          const authorSelect = document.getElementById('filterAuthor');
+          if(data.authors) {
+            authorSelect.innerHTML = '<option value="">Tất cả tác giả</option>';
+            data.authors.forEach(author => {
+              authorSelect.innerHTML += `<option value="${author.author_id}">${author.name}</option>`;
+            });
+          }
+
+          const librarySelect = document.getElementById('filterLibrary');
+          if(data.libraries) {
+            librarySelect.innerHTML = '<option value="">Tất cả thư viện</option>';
+            data.libraries.forEach(library => {
+              librarySelect.innerHTML += `<option value="${library}">${library}</option>`;
+            });
+          }
+        }
+
+          function performFilterSearch() {
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams();
+            
+            const keyword = document.getElementById('filterKeyword').value.trim();
+            const library = document.getElementById('filterLibrary').value;
+            const category = document.getElementById('filterCategory').value;
+            const author = document.getElementById('filterAuthor').value;
+            const language = document.getElementById('filterLanguage').value;
+            const status = document.getElementById('filterStatus').value;
+
+            if(keyword) params.append('q', keyword);
+            if(library) params.append('library', library);
+            if(category) params.append('category', category);
+            if(author) params.append('author', author);
+            if(language) params.append('language', language);
+            if(status) params.append('status', status);
+
+            const queryString = params.toString();
+            window.location.href = `/search${queryString ? '?' + queryString : ''}`;
+          }
       }
     })();
 </script>

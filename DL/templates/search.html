@@ -9,8 +9,57 @@
         
         <div class="card mb-4">
             <div class="card-body">
-                <h5 class="card-title">🔍 Từ khóa: "<span id="searchQuery">{{ search_query }}</span>"</h5>
-                <p class="text-muted mb-0">Tìm thấy <span id="totalResults">0</span> kết quả</p>
+                {% if search_query or filters %}
+                <h5 class="card-title">🔍 Kết quả tìm kiếm</h5>
+                {% if search_query %}
+                <p class="mb-2"><strong>Từ khóa:</strong> "{{ search_query }}"</p>
+                {% endif %}
+                
+                {% if filters %}
+                <div class="active-filters mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>Bộ lọc đang áp dụng:</strong>
+                        <a href="/search" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-eraser"></i> Xóa tất cả bộ lọc
+                        </a>
+                    </div>
+                    <div class="filter-tags mt-1">
+                        {% if filters.library %}
+                        <span class="badge bg-info me-1">Thư viện: {{ filters.library }}</span>
+                        {% endif %}
+                        {% if filters.category %}
+                        <span class="badge bg-success me-1">Danh mục: {{ filters.category }}</span>
+                        {% endif %}
+                        {% if filters.author %}
+                        <span class="badge bg-warning me-1">Tác giả: {{ filters.author }}</span>
+                        {% endif %}
+                        {% if filters.language %}
+                        <span class="badge bg-primary me-1">Ngôn ngữ: {{ filters.language }}</span>
+                        {% endif %}
+                        {% if filters.status %}
+                        <span class="badge bg-{{ 'success' if filters.status == 'available' else 'danger' }} me-1">
+                            {{ 'Có sẵn' if filters.status == 'available' else 'Đã mượn' }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <p class="text-muted mb-0">
+                    Tìm thấy <span id="totalResults">{{ pagination.total if pagination else 0 }}</span> kết quả
+                    {% if pagination and pagination.pages > 1 %}
+                    - Trang {{ pagination.page }}/{{ pagination.pages }}
+                    {% endif %}
+                </p>
+                {% else %}
+                <h5 class="card-title">📚 Tất cả sách trong thư viện</h5>
+                <p class="text-muted mb-0">
+                    Hiển thị <span id="totalResults">{{ pagination.total if pagination else 0 }}</span> sách
+                    {% if pagination and pagination.pages > 1 %}
+                    - Trang {{ pagination.page }}/{{ pagination.pages }}
+                    {% endif %}
+                </p>
+                {% endif %}
             </div>
         </div>
 
@@ -67,17 +116,17 @@
                 <ul class="pagination justify-content-center">
                     {% if pagination.has_prev %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('main.search', q=search_query, page=pagination.page-1) }}">Trước</a>
+                        <a class="page-link" href="{{ url_for('main.search', q=search_query, page=pagination.page-1, **filters) }}">Trước</a>
                     </li>
                     {% endif %}
                     {% for p in range(1, pagination.pages + 1) %}
                     <li class="page-item {{ 'active' if p == pagination.page else '' }}">
-                        <a class="page-link" href="{{ url_for('main.search', q=search_query, page=p) }}">{{ p }}</a>
+                        <a class="page-link" href="{{ url_for('main.search', q=search_query, page=p, **filters) }}">{{ p }}</a>
                     </li>
                     {% endfor %}
                     {% if pagination.has_next %}
                     <li class="page-item">
-                        <a class="page-link" href="{{ url_for('main.search', q=search_query, page=pagination.page+1) }}">Sau</a>
+                        <a class="page-link" href="{{ url_for('main.search', q=search_query, page=pagination.page+1, **filters) }}">Sau</a>
                     </li>
                     {% endif %}
                 </ul>
