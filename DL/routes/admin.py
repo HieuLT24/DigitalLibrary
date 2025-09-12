@@ -4,6 +4,7 @@ from datetime import date
 
 from DL.models import db, Book, BorrowSlip, User, Category, BorrowRequest
 from DL.services.borrow_service import BorrowService
+from DL.services.book_service import BookService
 
 admin_bp = Blueprint('admin', __name__)
 
@@ -126,12 +127,41 @@ def reject_request(request_id):
         flash(mapping.get(str(e), "Từ chối thất bại."), "danger")
     return redirect(url_for('admin.admin_requests', status='pending'))
 
-@admin_bp.route("/add-book")
+@admin_bp.route("/add-book", methods=["GET", "POST"])
 @login_required
 def add_book():
     if current_user.role != 'admin':
         return abort(403)
-    return render_template("admin_templates/add_book.html")
+    
+    service = BookService()
+    categories = service.get_categories()
+    authors = service.get_authors()
+    
+    if request.method == "POST":
+    
+        data = {
+            "title": request.form.get("title"),
+            "publisher": request.form.get("publisher"),
+            "category_id": request.form.get("category_id"),
+            "isbn": request.form.get("isbn"),
+            "language": request.form.get("language"),
+            "publish_year": request.form.get("publish_year"),
+            "quantity": request.form.get("quantity"),
+            "description": request.form.get("description"),
+            "library_location": request.form.get("library_location"),
+            "author_id": request.form.get("author_id"),
+        }
+
+        image_file = request.files.get("image")
+
+        service.add_book(data, image_file)
+
+        flash("📚 Thêm sách thành công!", "success")
+        return redirect(url_for('admin.add_book'))
+
+    return render_template("admin_templates/add_book.html",
+                           categories=categories,
+                           authors=authors)
 
 @admin_bp.route("/slips")
 @login_required
