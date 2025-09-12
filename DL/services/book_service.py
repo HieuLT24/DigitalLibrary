@@ -1,4 +1,5 @@
 from DL.models import Book, Author, Category, db
+import cloudinary.uploader
 
 class BookService:
     
@@ -71,3 +72,33 @@ class BookService:
             'authors': authors,
             'libraries': libraries
         }
+    
+    def add_book(self, data, image_file=None):
+        """Thêm sách mới vào DB, kèm upload ảnh lên Cloudinary."""
+        image_url = None
+
+        if image_file:
+            upload_result = cloudinary.uploader.upload(
+                image_file,
+                folder="library/books"
+            )
+            image_url = upload_result.get("secure_url")
+
+        new_book = Book(
+            title=data.get("title"),
+            publisher=data.get("publisher"),
+            category_id=data.get("category_id"),
+            isbn=data.get("isbn"),
+            language=data.get("language"),
+            publish_year=data.get("publish_year"),
+            quantity=int(data.get("quantity")) if data.get("quantity") else 1,
+            description=data.get("description"),
+            library_location=data.get("library_location", "Kho chính"),
+            image=image_url,
+            author_id=data.get("author_id"),
+            status="available"
+        )
+
+        db.session.add(new_book)
+        db.session.commit()
+        return new_book
