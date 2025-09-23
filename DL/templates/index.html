@@ -84,6 +84,7 @@ body {
   .book-cards{ gap:18px; grid-template-columns:repeat(auto-fill,minmax(150px,1fr)); }
 }
 </style>
+{% include 'partials/header.html' %}
 
 <h2 class="hero-heading">Chào mừng bạn đến với Thư viện số!</h2>
 
@@ -131,4 +132,5 @@ body {
     <p>Chưa có sách trong hệ thống.</p>
   {% endif %}
 </div>
+{% include 'partials/footer.html' %}
 {% endblock %}

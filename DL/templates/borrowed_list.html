@@ -75,7 +75,7 @@
 }
 .btn-go-books:hover{ background:#0293b0; }
 </style>
-
+{% include 'partials/header.html' %}
 <div class="borrowed-wrapper">
   <div class="borrowed-header">
     <h2 style="margin:0;font-size:22px;font-weight:700;letter-spacing:.5px;">Sách đang mượn</h2>
@@ -117,4 +117,5 @@
     </div>
   {% endif %}
 </div>
+{% include 'partials/footer.html' %}
 {% endblock %}

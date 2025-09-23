@@ -1,7 +1,25 @@
 {% extends 'base.html' %}
 {% block title %}Đăng Ký{% endblock %}
-
 {% block content %}
+<header class="topbar">
+    <div class="container topbar-inner">
+
+        <div class="left-block">
+            <a class="home-icon" href="{{ url_for('main.index') }}" aria-label="Trang chủ">
+                <i class="fa-solid fa-house"></i>
+            </a>
+            <span class="brand">Thư viện số</span>
+        </div>
+
+
+        <div class="top-actions">
+            <div class="auth-buttons-colored">
+                <a href="{{ url_for('auth.login') }}" class="btn-auth btn-blue-login">
+                    <i class="fa-solid fa-right-to-bracket"></i><span>Đăng nhập</span>
+                </a>
+            </div>
+        </div>
+</header>
 <div class="container py-5">
   <div class="row justify-content-center">
     <div class="col-md-7 col-lg-6">
@@ -48,24 +66,7 @@
                 placeholder="you@example.com">
             </div>
 
-            <div class="mb-3">
-              <label class="form-label d-block">Giới tính</label>
-              {% set g = (form.gender if form is defined else '') %}
-              <div class="d-flex gap-4">
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="gender" id="g-m" value="Nam" {% if g=='Nam' %}checked{% endif %}>
-                  <label class="form-check-label" for="g-m">Nam</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="gender" id="g-f" value="Nữ" {% if g=='Nữ' %}checked{% endif %}>
-                  <label class="form-check-label" for="g-f">Nữ</label>
-                </div>
-                <div class="form-check">
-                  <input class="form-check-input" type="radio" name="gender" id="g-o" value="Khác" {% if g=='Khác' %}checked{% endif %}>
-                  <label class="form-check-label" for="g-o">Khác</label>
-                </div>
-              </div>
-            </div>
+
 
             <div class="mb-3">
               <label class="form-label" for="phone_number">Số điện thoại</label>
@@ -120,4 +121,5 @@
     </div>
   </div>
 </div>
+{% include 'partials/footer.html' %}
 {% endblock %}

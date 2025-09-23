@@ -1,4 +1,25 @@
 {% extends 'base.html' %} {% block title %}Đăng Nhập{% endblock %} {% block content %}
+<header class="topbar">
+    <div class="container topbar-inner">
+
+        <div class="left-block">
+            <a class="home-icon" href="{{ url_for('main.index') }}" aria-label="Trang chủ">
+                <i class="fa-solid fa-house"></i>
+            </a>
+            <span class="brand">Thư viện số</span>
+        </div>
+
+
+        <div class="top-actions">
+                <a href="{{ url_for('auth.register') }}" class="btn-auth btn-green-register">
+                    <i class="fa-solid fa-user-plus"></i><span>Đăng ký</span>
+                </a>
+            </div>
+
+        </nav>
+    </div>
+    <div class="topbar-accent"></div>
+</header>
 <body class="bg-light">
   <div class="container py-5">
     <div class="row justify-content-center">
