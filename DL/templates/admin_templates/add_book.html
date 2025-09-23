@@ -1,6 +1,9 @@
 {% extends 'base.html' %} {% block title %}Thêm Sách Mới{% endblock %} {% block content %}
-<body class="bg-light">
-  <div class="container py-5">
+{% include 'partials/header.html' %}
+<div class="admin-layout">
+  {% include 'admin_templates/partials/sidebar.html' %}
+  <section class="admin-content">
+    <div class="container py-5">
     <div class="card shadow-lg">
       <div class="card-header bg-primary text-white">
         <h4 class="mb-0">Thêm Sách Mới</h4>
@@ -119,6 +122,8 @@
         </form>
       </div>
     </div>
-  </div>
-</body>
+    </div>
+  </section>
+</div>
+{% include 'partials/footer.html' %}
 {% endblock %}

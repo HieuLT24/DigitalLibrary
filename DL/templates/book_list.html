@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Danh sách sách{% endblock %}
 {% block content %}
+{% include 'partials/header.html' %}
 <h2 class="mb-4">Danh sách sách</h2>
 <div class="row g-4">
   {% for b in books %}
@@ -47,5 +48,6 @@
     </li>
   </ul>
 </nav>
+{% include 'partials/footer.html' %}
 {% endif %}
 {% endblock %}

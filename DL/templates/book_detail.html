@@ -82,7 +82,7 @@
   .summary-item span.value{ text-align:left; }
 }
 </style>
-
+{% include 'partials/header.html' %}
 <div class="book-detail-wrapper">
   <div class="book-left">
     <div class="cover-box">
@@ -235,4 +235,5 @@
     <p>Chưa có mô tả cho sách này.</p>
   {% endif %}
 </div>
+{% include 'partials/footer.html' %}
 {% endblock %}

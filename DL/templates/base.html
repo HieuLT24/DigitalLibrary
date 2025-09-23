@@ -9,7 +9,6 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
 </head>
 <body>
-{% include 'partials/header.html' %}
 
 <main class="container main-content">
     {% with messages = get_flashed_messages(with_categories=true) %}
@@ -23,8 +22,6 @@
     {% endwith %}
     {% block content %}{% endblock %}
 </main>
-
-{% include 'partials/footer.html' %}
 
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
 <script src="{{ url_for('static', filename='js/main.js') }}"></script>

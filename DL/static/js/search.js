@@ -41,10 +41,7 @@ class SearchAutocomplete {
             this.hideDropdown();
             return;
         }
-        
-        this.debounceTimer = setTimeout(() => {
-            this.performQuickSearch(value.trim());
-        }, 1000);
+
     }
     
     async performQuickSearch(keyword) {

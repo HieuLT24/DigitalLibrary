@@ -1,6 +1,7 @@
 {% extends 'base.html' %}
 {% block title %}Quản trị - Thống kê{% endblock %}
 {% block content %}
+{% include 'partials/header.html' %}
 <div class="admin-layout">
   {% include 'admin_templates/partials/sidebar.html' %}
 
@@ -89,5 +90,6 @@
     }
   })();
   </script>
+{% include 'partials/footer.html' %}
 {% endblock %}
 

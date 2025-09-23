@@ -33,7 +33,7 @@
 .btn-cancel-inline:hover{ background:#c02121; }
 .status-canceled{ background:#ececec !important; color:#555 !important; }
 </style>
-
+{% include 'partials/header.html' %}
 <div class="req-wrapper">
   <h2>Yêu cầu mượn sách</h2>
   {% if requests and requests|length > 0 %}
@@ -88,4 +88,5 @@
     </div>
   {% endif %}
 </div>
+{% include 'partials/footer.html' %}
 {% endblock %}

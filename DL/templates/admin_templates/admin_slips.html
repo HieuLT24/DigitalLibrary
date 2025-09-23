@@ -98,7 +98,7 @@
   .btn-action{flex:1 1 auto;min-width:0;}
 }
 </style>
-
+{% include 'partials/header.html' %}
 <div class="admin-layout">
   {% include 'admin_templates/partials/sidebar.html' %}
   <section class="admin-content">
@@ -191,4 +191,5 @@
     {% endif %}
   </section>
 </div>
+{% include 'partials/footer.html' %}
 {% endblock %}
