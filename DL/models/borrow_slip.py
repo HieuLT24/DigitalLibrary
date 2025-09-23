@@ -13,5 +13,6 @@ class BorrowSlip(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
     book_id = db.Column(db.Integer, db.ForeignKey("book.book_id"), nullable=False)
+    
 
 

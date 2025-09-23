@@ -12,3 +12,4 @@ class Notification(db.Model):
 
     user_id = db.Column(db.Integer, db.ForeignKey("user.user_id"), nullable=False)
 
+

@@ -9,3 +9,4 @@ class Category(db.Model):
 
     books = db.relationship("Book", backref="category", lazy=True)
 
+

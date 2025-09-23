@@ -1,0 +1,155 @@
+{% extends 'base.html' %}
+
+{% block title %}Tìm kiếm sách - Thư viện số{% endblock %}
+{% include 'partials/header.html' %}
+{% block content %}
+<div class="row">
+    <div class="col-12">
+        <h1 class="text-center mb-4">📚 Kết quả tìm kiếm</h1>
+        
+        <div class="card mb-4">
+            <div class="card-body">
+                {% if search_query or filters %}
+                <h5 class="card-title">🔍 Kết quả tìm kiếm</h5>
+                {% if search_query %}
+                <p class="mb-2"><strong>Từ khóa:</strong> "{{ search_query }}"</p>
+                {% endif %}
+                
+                {% if filters %}
+                <div class="active-filters mb-2">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <strong>Bộ lọc đang áp dụng:</strong>
+                        <a href="/search" class="btn btn-sm btn-outline-secondary">
+                            <i class="fa-solid fa-eraser"></i> Xóa tất cả bộ lọc
+                        </a>
+                    </div>
+                    <div class="filter-tags mt-1">
+                        {% if filters.library %}
+                        <span class="badge bg-info me-1">Thư viện: {{ filters.library }}</span>
+                        {% endif %}
+                        {% if filters.category %}
+                        <span class="badge bg-success me-1">Danh mục: {{ filters.category }}</span>
+                        {% endif %}
+                        {% if filters.author %}
+                        <span class="badge bg-warning me-1">Tác giả: {{ filters.author }}</span>
+                        {% endif %}
+                        {% if filters.language %}
+                        <span class="badge bg-primary me-1">Ngôn ngữ: {{ filters.language }}</span>
+                        {% endif %}
+                        {% if filters.status %}
+                        <span class="badge bg-{{ 'success' if filters.status == 'available' else 'danger' }} me-1">
+                            {{ 'Có sẵn' if filters.status == 'available' else 'Đã mượn' }}
+                        </span>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                
+                <p class="text-muted mb-0">
+                    Tìm thấy <span id="totalResults">{{ pagination.total if pagination else 0 }}</span> kết quả
+                    {% if pagination and pagination.pages > 1 %}
+                    - Trang {{ pagination.page }}/{{ pagination.pages }}
+                    {% endif %}
+                </p>
+                {% else %}
+                <h5 class="card-title">📚 Tất cả sách trong thư viện</h5>
+                <p class="text-muted mb-0">
+                    Hiển thị <span id="totalResults">{{ pagination.total if pagination else 0 }}</span> sách
+                    {% if pagination and pagination.pages > 1 %}
+                    - Trang {{ pagination.page }}/{{ pagination.pages }}
+                    {% endif %}
+                </p>
+                {% endif %}
+            </div>
+        </div>
+
+        <div id="searchResults">
+            <div id="booksList" class="row">
+                {% if books and books|length > 0 %}
+                    {% for book in books %}
+                    <div class="col-md-3 col-lg-3 mb-3">
+                        <div class="card h-100 book-card">
+                            <div class="book-image-container">
+                                {% if book.image %}
+                                    <img src="{{ book.image }}" alt="{{ book.title }}" class="book-image">
+                                {% else %}
+                                    <div class="book-image-placeholder">{{ book.title[:1]|upper }}</div>
+                                {% endif %}
+                            </div>
+                            <div class="card-body">
+                                <h6 class="card-title">{{ book.title }}</h6>
+                                <p class="card-text">
+                                    <small class="text-muted">
+                                        <i class="fas fa-user"></i> {{ book.author.name if book.author else 'Chưa có tác giả' }}<br>
+                                        <i class="fas fa-tag"></i> {{ book.category.name if book.category else 'Chưa có danh mục' }}<br>
+                                        <i class="fas fa-calendar"></i> {{ book.publish_year or 'N/A' }}<br>
+                                        <i class="fas fa-language"></i> {{ book.language or 'N/A' }}
+                                    </small>
+                                </p>
+                                <p class="card-text">
+                                    <small>{{ book.description[:100] ~ '...' if book.description else 'Chưa có mô tả' }}</small>
+                                </p>
+                            </div>
+                            <div class="card-footer d-flex justify-content-between align-items-center">
+                                <span class="badge {{ 'bg-success' if book.status == 'available' else 'bg-warning' }}">
+                                    {{ 'Có sẵn' if book.status == 'available' else 'Đã mượn' }}
+                                </span>
+                                <a class="btn btn-sm btn-outline-primary" href="{{ url_for('main.book_detail', book_id=book.book_id) }}">
+                                    <i class="fas fa-eye"></i> Xem chi tiết
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="text-center">
+                        <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                        <h5>Không tìm thấy sách nào</h5>
+                        <p class="text-muted">Hãy thử với từ khóa khác</p>
+                        <a href="/" class="btn btn-primary">Về trang chủ</a>
+                    </div>
+                {% endif %}
+            </div>
+            
+            {% if pagination and pagination.pages > 1 %}
+            <nav class="mt-4">
+                <ul class="pagination justify-content-center">
+                    {% if pagination.has_prev %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('main.search', q=search_query, page=pagination.page-1, **filters) }}">Trước</a>
+                    </li>
+                    {% endif %}
+                    {% for p in range(1, pagination.pages + 1) %}
+                    <li class="page-item {{ 'active' if p == pagination.page else '' }}">
+                        <a class="page-link" href="{{ url_for('main.search', q=search_query, page=p, **filters) }}">{{ p }}</a>
+                    </li>
+                    {% endfor %}
+                    {% if pagination.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="{{ url_for('main.search', q=search_query, page=pagination.page+1, **filters) }}">Sau</a>
+                    </li>
+                    {% endif %}
+                </ul>
+            </nav>
+            {% endif %}
+        </div>
+
+        <div id="errorMessage" class="alert alert-danger d-none" role="alert">
+            <i class="fas fa-exclamation-triangle"></i>
+            <span id="errorText"></span>
+        </div>
+
+        <div id="noResults" class="text-center d-none">
+            <div class="card">
+                <div class="card-body">
+                    <i class="fas fa-search fa-3x text-muted mb-3"></i>
+                    <h5>Không tìm thấy sách nào</h5>
+                    <p class="text-muted">Hãy thử với từ khóa khác</p>
+                    <a href="/" class="btn btn-primary">Về trang chủ</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% include 'partials/footer.html' %}
+{% endblock %}

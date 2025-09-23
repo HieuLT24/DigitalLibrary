@@ -1,6 +1,7 @@
 from flask import Flask
 from flask_migrate import Migrate
 from flask_login import LoginManager
+import cloudinary
 
 from DL.models import db, User
 
@@ -23,6 +24,15 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return User.query.get(int(user_id))
+
+    @app.context_processor
+    def inject_time_helpers():
+        from datetime import datetime, date
+        return {
+            'now': datetime.utcnow,
+            'today': date.today()
+        }
+
     from DL import models
     
     from DL.routes.main import main_bp
@@ -34,9 +44,11 @@ def create_app():
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(user_bp, url_prefix='/user')
     app.register_blueprint(auth_bp, url_prefix='/auth')
-    
-    from DL.controllers.book_controller import book_controller
 
-    app.register_blueprint(book_controller, url_prefix='/api')
+    cloudinary.config(
+        cloud_name=app.config["CLOUDINARY_CLOUD_NAME"],
+        api_key=app.config["CLOUDINARY_API_KEY"],
+        api_secret=app.config["CLOUDINARY_API_SECRET"]
+    )
     
     return app

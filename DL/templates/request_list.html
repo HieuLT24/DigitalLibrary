@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+{% extends 'base.html' %}
+{% block title %}Yêu cầu mượn{% endblock %}
+{% block content %}
+<style>
+.req-wrapper{max-width:1000px;margin:30px auto 60px;padding:0 14px;}
+.req-wrapper h2{font-size:22px;font-weight:700;margin:0 0 20px;}
+.req-table{width:100%;border-collapse:collapse;font-size:14px;}
+.req-table th, .req-table td{padding:10px 12px;border-bottom:1px solid #e2e8ef;text-align:left;}
+.req-table th{background:#f1f6f9;font-weight:600;font-size:13px;letter-spacing:.5px;text-transform:uppercase;}
+.status-badge{display:inline-block;font-size:11px;font-weight:600;padding:4px 10px;border-radius:14px;letter-spacing:.5px;}
+.status-pending{background:#ffe8a3;color:#7a5600;}
+.status-approved{background:#c5f3d0;color:#155f26;}
+.status-rejected{background:#f9c5c1;color:#8a1f18;}
+.status-converted{background:#d0e7ff;color:#0d518c;}
+.empty-box{margin:40px auto;padding:40px 24px;border:2px dashed #b8c6cc;border-radius:14px;max-width:600px;text-align:center;background:#f7fbfc;}
+.empty-box h3{margin:0 0 12px;font-size:20px;font-weight:600;}
+.empty-box p{margin:0 0 14px;color:#4d5d67;}
+.link-detail{color:#1d86f0;text-decoration:none;font-weight:600;font-size:12px;}
+.link-detail:hover{text-decoration:underline;}
+.btn-cancel-inline{
+  background:#e03131;
+  color:#fff;
+  border:none;
+  padding:6px 10px;
+  font-size:12px;
+  font-weight:600;
+  border-radius:6px;
+  cursor:pointer;
+  letter-spacing:.3px;
+  transition:.15s;
+}
+.btn-cancel-inline:hover{ background:#c02121; }
+.status-canceled{ background:#ececec !important; color:#555 !important; }
+</style>
+{% include 'partials/header.html' %}
+<div class="req-wrapper">
+  <h2>Yêu cầu mượn sách</h2>
+  {% if requests and requests|length > 0 %}
+    <table class="req-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Sách</th>
+          <th>Ngày yêu cầu</th>
+          <th>Trạng thái</th>
+          <th>Thao tác</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in requests %}
+          <tr>
+            <td>{{ r.request_id }}</td>
+            <td>{{ r.book.title if r.book else '—' }}</td>
+            <td>{{ r.request_date.strftime('%d/%m/%Y') if r.request_date else '—' }}</td>
+            <td>
+              <span class="status-badge status-{{ r.status }}">
+                {% if r.status == 'pending' %}Chờ duyệt
+                {% elif r.status == 'approved' %}Đã duyệt
+                {% elif r.status == 'rejected' %}Từ chối
+                {% elif r.status == 'converted' %}Đã tạo phiếu
+                {% elif r.status == 'canceled' %}Đã hủy
+                {% else %}{{ r.status }}{% endif %}
+              </span>
+            </td>
+            <td>
+              {% if r.status == 'pending' %}
+              <form method="post" action="{{ url_for('user.cancel_request', request_id=r.request_id) }}" onsubmit="return confirm('Hủy yêu cầu #{{ r.request_id }}?');">
+                <button type="submit" class="btn-cancel-inline">Hủy</button>
+              </form>
+              {% endif %}
+            </td>
+            <td>
+              {% if r.book %}
+                <a class="link-detail" href="{{ url_for('main.book_detail', book_id=r.book.book_id) }}">Chi tiết &raquo;</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <div class="empty-box">
+      <h3>Chưa có yêu cầu nào</h3>
+      <p>Hãy vào chi tiết một cuốn sách và bấm “Đăng ký mượn sách”.</p>
+      <a class="btn-go-books" style="display:inline-block;background:#00b4d8;color:#fff;padding:10px 18px;border-radius:8px;font-weight:600;text-decoration:none;" href="{{ url_for('main.book_list') }}">Xem sách</a>
+    </div>
+  {% endif %}
+</div>
+{% include 'partials/footer.html' %}
+{% endblock %}

@@ -1,198 +1,137 @@
-{% extends 'base.html' %} {% block title %}Quản lý thư viện - Yêu cầu mượn sách{% endblock %} {% block content %}
+{% extends 'base.html' %}
+{% block title %}Quản lý thư viện - Yêu cầu mượn sách{% endblock %}
+{% block content %}
+<style>
+.card-link{ text-decoration:none; color:inherit; }
+.card-link .card{ cursor:pointer; transition:.2s; }
+.card-link .card:hover{ transform:translateY(-2px); box-shadow:0 4px 8px rgba(0,0,0,.1); }
+.card.active{ border:2px solid #007bff; background:#f4f9ff; }
+.actions form{ display:inline-block; margin-right:4px; }
+.status-badge{display:inline-block;font-size:11px;font-weight:600;padding:4px 10px;border-radius:14px;letter-spacing:.4px;}
+.status-pending{background:#ffe8a3;color:#7a5600;}
+.status-approved{background:#c5f3d0;color:#155f26;}
+.status-rejected{background:#f9c5c1;color:#8a1f18;}
+.status-converted{background:#d0e7ff;color:#0d518c;}
+</style>
+{% include 'partials/header.html' %}
 <div class="admin-layout">
-  <aside class="admin-sidenav">
-    <h3>Library Admin</h3>
-    <nav>
-      <a class="active" href="#">Dashboard</a>
-      <a href="#">Yêu cầu mượn sách</a>
-      <a href="/add-book">Thêm sách</a>
-      <a href="#">Users</a>
-      <a href="#">Books</a>
-      <a href="#">Settings</a>
-    </nav>
-  </aside>
+  {% include 'admin_templates/partials/sidebar.html' %}
 
   <section class="admin-content">
-    <h2>Quản lý thư viện</h2>
-    <div class="cards">
-      <div class="card">
-        <div>Pending Requests</div>
-        <strong>24</strong>
-      </div>
-      <div class="card success">
-        <div>Approved Requests</div>
-        <strong>156</strong>
-      </div>
-      <div class="card danger">
-        <div>Rejected Requests</div>
-        <strong>12</strong>
-      </div>
-      <div class="card warning">
-        <div>Overdue Books</div>
-        <strong>8</strong>
-      </div>
+    <h2>Quản lý yêu cầu mượn</h2>
+
+    <div class="cards" style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;">
+      <a href="{{ url_for('admin.admin_requests', status='pending') }}" class="card-link">
+        <div class="card {{ 'active' if current_filter=='pending' else '' }}">
+          <div>Pending</div><strong>{{ counts.pending }}</strong>
+        </div>
+      </a>
+      <a href="{{ url_for('admin.admin_requests', status='approved') }}" class="card-link">
+        <div class="card {{ 'active' if current_filter=='approved' else '' }}">
+          <div>Approved</div><strong>{{ counts.approved }}</strong>
+        </div>
+      </a>
+      <a href="{{ url_for('admin.admin_requests', status='converted') }}" class="card-link">
+        <div class="card {{ 'active' if current_filter=='converted' else '' }}">
+          <div>Converted</div><strong>{{ counts.converted }}</strong>
+        </div>
+      </a>
+      <a href="{{ url_for('admin.admin_requests', status='rejected') }}" class="card-link">
+        <div class="card {{ 'active' if current_filter=='rejected' else '' }}">
+          <div>Rejected</div><strong>{{ counts.rejected }}</strong>
+        </div>
+      </a>
+      <a href="{{ url_for('admin.admin_requests') }}" class="card-link">
+        <div class="card {{ '' if current_filter else 'active' }}">
+          <div>Tất cả</div><strong>{{ counts.pending + counts.approved + counts.converted + counts.rejected }}</strong>
+        </div>
+      </a>
     </div>
 
     <div class="panel">
-      <div class="panel-header">
-        <h3>Chờ duyệt</h3>
-        <input class="table-search" placeholder="Search requests..." />
-      </div>
-      <table class="requests">
+      <table class="requests table table-sm">
         <thead>
           <tr>
-            <th>BOOK</th>
-            <th>USER</th>
-            <th>REQUEST DATE</th>
-            <th>DUE DATE</th>
-            <th>STATUS</th>
-            <th>ACTIONS</th>
+            <th>#</th>
+            <th>Book</th>
+            <th>User</th>
+            <th>Ngày yêu cầu</th>
+            <th>Trạng thái</th>
+            <th>Actions</th>
           </tr>
         </thead>
         <tbody>
-          {% for r in requests %}
+        {% for r in requests %}
           <tr>
-            <td>{{ r.book }}</td>
-            <td>{{ r.user }}</td>
-            <td>{{ r.req_date }}</td>
-            <td>{{ r.due_date }}</td>
-            <td><span class="status {{ r.status|lower }}">{{ r.status }}</span></td>
-            <td class="actions">✅ ❌ 👁</td>
+            <td>{{ r.request_id }}</td>
+            <td>{{ r.book.title if r.book else 'N/A' }}</td>
+            <td>{{ r.user.full_name if r.user else 'N/A' }}</td>
+            <td>{{ r.request_date.strftime('%d/%m/%Y') if r.request_date else '—' }}</td>
+            <td>
+              <span class="status-badge status-{{ r.status }}">
+                {% if r.status=='pending' %}Chờ duyệt
+                {% elif r.status=='approved' %}Đã duyệt
+                {% elif r.status=='converted' %}Đã tạo phiếu
+                {% elif r.status=='rejected' %}Từ chối
+                {% else %}{{ r.status }}{% endif %}
+              </span>
+              {% if r.status=='rejected' and r.reject_reason %}
+                <div style="font-size:11px;color:#8a1f18;margin-top:4px;">Lý do: {{ r.reject_reason }}</div>
+              {% endif %}
+            </td>
+            <td class="actions">
+              {% if r.status == 'pending' %}
+                <form method="POST" action="{{ url_for('admin.approve_request', request_id=r.request_id) }}">
+                  <button class="btn btn-sm btn-success">Duyệt</button>
+                </form>
+                <button class="btn btn-sm btn-danger" type="button" onclick="showRejectModal({{ r.request_id }})">Từ chối</button>
+              {% elif r.status == 'approved' %}
+                <form method="POST" action="{{ url_for('admin.convert_request', request_id=r.request_id) }}">
+                  <button class="btn btn-sm btn-primary">Giao sách</button>
+                </form>
+              {% else %}
+                <span class="text-muted">—</span>
+              {% endif %}
+            </td>
           </tr>
-          {% endfor %}
+        {% endfor %}
         </tbody>
       </table>
     </div>
-
-    <div class="panel">
-      <h3>Request Details</h3>
-      <div class="request-detail-grid">
-        <div class="book">The Great Gatsby<br /><small>F. Scott Fitzgerald</small></div>
-        <div class="user">
-          <strong>User Information</strong>
-          <div>John Smith</div>
-          <div>john.smith@example.com</div>
-        </div>
-        <div class="status-box">
-          <strong>Status</strong>
-          <div><span class="status pending">Pending</span></div>
-        </div>
-      </div>
-      <div class="detail-actions">
-        <button class="btn-success">Approve</button>
-        <button class="btn-danger">Reject</button>
-        <button>Delete</button>
-      </div>
-    </div>
   </section>
 </div>
+
+<!-- Modal Từ chối -->
+<div class="modal fade" id="rejectModal" tabindex="-1">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="rejectForm" method="POST">
+        <div class="modal-header">
+          <h5 class="modal-title">Từ chối yêu cầu</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <label class="form-label">Lý do:</label>
+          <textarea class="form-control" name="reject_reason" rows="3" placeholder="Nhập lý do từ chối..."></textarea>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+          <button type="submit" class="btn btn-danger">Từ chối</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% include 'partials/footer.html' %}
 {% endblock %}
-<!DOCTYPE html>
-<html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Quản lý thư viện</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
-    <style>
-      body {
-        background-color: #f8f9fa;
-      }
-      .sidebar {
-        width: 250px;
-        min-height: 100vh;
-        background: #3f3d9e;
-        color: white;
-        position: fixed;
-        top: 0;
-        left: 0;
-        padding: 20px;
-      }
-      .sidebar a {
-        color: white;
-        display: block;
-        margin: 15px 0;
-        text-decoration: none;
-      }
-      .content {
-        margin-left: 260px;
-        padding: 20px;
-      }
-    </style>
-  </head>
-  <body>
-    <!-- Sidebar -->
-    <div class="sidebar">
-      <h4 class="fw-bold mb-4">Library Admin</h4>
-      <a href="#">Dashboard</a>
-      <a href="#">Yêu cầu mượn sách</a>
-      <a href="#">Users</a>
-      <a href="#">Books</a>
-      <a href="#">Settings</a>
-    </div>
 
-    <!-- Main Content -->
-    <div class="content">
-      <h3 class="fw-bold mb-4">Quản lý thư viện</h3>
-
-      <!-- Stats -->
-      <div class="row mb-4">
-        <div class="col">
-          <div class="card p-3 text-center">
-            Pending Requests
-            <h4>24</h4>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card p-3 text-center">
-            Approved Requests
-            <h4>156</h4>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card p-3 text-center">
-            Rejected Requests
-            <h4>12</h4>
-          </div>
-        </div>
-        <div class="col">
-          <div class="card p-3 text-center">
-            Overdue Books
-            <h4>8</h4>
-          </div>
-        </div>
-      </div>
-
-      <!-- Requests Table -->
-      <div class="card p-3">
-        <h5>Chờ duyệt</h5>
-        <table class="table table-hover">
-          <thead>
-            <tr>
-              <th>BOOK</th>
-              <th>USER</th>
-              <th>REQUEST DATE</th>
-              <th>DUE DATE</th>
-              <th>STATUS</th>
-              <th>ACTIONS</th>
-            </tr>
-          </thead>
-          <tbody>
-            <tr>
-              <td>The Great Gatsby</td>
-              <td>John Smith</td>
-              <td>Jun 12, 2023</td>
-              <td>Jul 12, 2023</td>
-              <td><span class="badge bg-warning">Pending</span></td>
-              <td>
-                <a href="#" class="text-success me-2">✔</a>
-                <a href="#" class="text-danger me-2">✖</a>
-                <a href="#" class="text-primary">👁</a>
-              </td>
-            </tr>
-            <!-- thêm dòng khác tương tự -->
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </body>
-</html>
+{% block scripts %}
+<script>
+function showRejectModal(requestId){
+  const form = document.getElementById('rejectForm');
+  form.action = `/admin/requests/${requestId}/reject`;
+  const modal = new bootstrap.Modal(document.getElementById('rejectModal'));
+  modal.show();
+}
+</script>
+{% endblock %}

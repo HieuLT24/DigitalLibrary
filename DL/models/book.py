@@ -14,14 +14,22 @@ class Book(db.Model):
     quantity = db.Column(db.Integer, default=1)
     library_location = db.Column(db.String(100))
     
+
     weight = db.Column(db.Float)
     size = db.Column(db.String(100))
     page_count = db.Column(db.Integer)
     cover_type = db.Column(db.String(100))
     isbn = db.Column(db.String(100))
+    image = db.Column(db.String(255))
     status = db.Column(db.String(50), default="available")
 
     category_id = db.Column(db.Integer, db.ForeignKey("category.category_id"), nullable=False)
     author_id = db.Column(db.Integer, db.ForeignKey("author.author_id"), nullable=False)
-    
+
     borrow_slips = db.relationship("BorrowSlip", backref="book", lazy=True)
+
+    borrow_requests = db.relationship(
+        "BorrowRequest",
+        back_populates="book",
+        lazy=True
+    )

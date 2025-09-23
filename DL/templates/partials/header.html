@@ -1,16 +1,323 @@
 <header class="topbar">
     <div class="container topbar-inner">
-        <a class="home-icon" href="{{ url_for('main.index') }}" aria-label="Trang chủ"><i class="fa-solid fa-house"></i></a>
-        <div class="brand">Trang Chủ</div>
-        <form class="search" role="search">
-            <input type="search" placeholder="Tìm kiếm" aria-label="Tìm kiếm">
-            <button type="submit" aria-label="Tìm"><i class="fa-solid fa-magnifying-glass"></i></button>
-        </form>
-        <div class="top-actions">
-            <a href="#" aria-label="Danh sách chờ duyệt"><i class="fa-solid fa-list-check me-1"></i>Danh sách chờ duyệt</a>
-            <a href="{{ url_for('user.user_profile') }}" aria-label="Tài khoản"><i class="fa-solid fa-user me-1"></i>Tài khoản</a>
+        <!-- Logo / Brand -->
+        <div class="left-block">
+            <a class="home-icon" href="{{ url_for('main.index') }}" aria-label="Trang chủ">
+                <i class="fa-solid fa-house"></i>
+            </a>
+
         </div>
+
+        <!-- Search -->
+        <div class="search-container" role="search">
+            <form class="search" id="searchForm">
+                <div class="search-input-wrapper">
+                    <input type="search" id="searchInput" placeholder="Tìm kiếm sách..." aria-label="Tìm kiếm">
+                    <button type="submit" aria-label="Tìm">
+                        <i class="fa-solid fa-magnifying-glass"></i>
+                    </button>
+                </div>
+                <div id="searchDropdown" class="search-dropdown d-none">
+                    <div id="searchResults" class="search-results"></div>
+                    <div class="search-footer">
+                        <small class="text-muted">Nhấn Enter để tìm kiếm chi tiết</small>
+                    </div>
+                </div>
+            </form>
+        </div>
+        <div class="top-actions">
+            <button id="filterToggle" class="btn btn-outline-primary" aria-label="Bộ lọc tìm kiếm">
+                <i class="fa-solid fa-filter me-1"></i>Bộ lọc
+            </button>
+            {% if current_user.is_authenticated and current_user.role == 'admin' %}
+            <a href="{{ url_for('admin.admin_index') }}" class="btn btn-sm btn-outline-secondary ms-2" aria-label="Quản trị">
+                <i class="fa-solid fa-screwdriver-wrench"></i> Quản trị
+            </a>
+            {% endif %}
+            <nav class="top-actions">
+            {% if current_user.is_authenticated %}
+            {% set display_name = (current_user.full_name or '').strip() or current_user.username %}
+            <div class="user-menu" id="userMenu">
+                <button class="user-trigger" id="userTrigger" aria-haspopup="true" aria-expanded="false">
+                    <i class="fa-solid fa-user"></i>
+                    <span class="name" title="{{ display_name }}">{{ display_name }}</span>
+                    <i class="fa-solid fa-chevron-down caret"></i>
+                </button>
+                <div class="user-dropdown" id="userDropdown" role="menu" aria-label="Menu tài khoản">
+                    <a href="{{ url_for('user.user_profile') }}" role="menuitem">
+                        <i class="fa-regular fa-id-card"></i> Thông tin tài khoản
+                    </a>
+                    <a href="{{ url_for('user.loans_overview') }}" role="menuitem">
+                        <i class="fa-solid fa-book"></i> Khoản mượn của tôi
+                    </a>
+                    <a href="{{ url_for('user.borrow_history') }}" role="menuitem">
+                        <i class="fa-solid fa-clock-rotate-left"></i> Lịch sử mượn trả
+                    </a>
+                    <div class="dropdown-divider"></div>
+                    <a href="{{ url_for('auth.logout') }}" class="logout" role="menuitem">
+                        <i class="fa-solid fa-right-from-bracket"></i> Đăng xuất
+                    </a>
+                </div>
+            </div>
+            {% else %}
+            <div class="auth-buttons-colored">
+                <a href="{{ url_for('auth.register') }}" class="btn-auth btn-green-register">
+                    <i class="fa-solid fa-user-plus"></i><span>Đăng ký</span>
+                </a>
+                <a href="{{ url_for('auth.login') }}" class="btn-auth btn-blue-login">
+                    <i class="fa-solid fa-right-to-bracket"></i><span>Đăng nhập</span>
+                </a>
+            </div>
+            {% endif %}
+        </nav>
     </div>
     <div class="topbar-accent"></div>
 </header>
 
+<!-- Filter Modal -->
+<div id="filterModal" class="filter-modal d-none">
+    <div class="filter-modal-content">
+        <div class="filter-header">
+            <h5><i class="fa-solid fa-filter"></i> Bộ lọc tìm kiếm</h5>
+            <button id="closeFilter" class="btn-close" aria-label="Đóng">&times;</button>
+        </div>
+        <div class="filter-body">
+            <form id="filterForm">
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="filterKeyword" class="form-label">Từ khóa</label>
+                        <input type="text" id="filterKeyword" class="form-control" placeholder="Nhập từ khóa tìm kiếm...">
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="filterLibrary" class="form-label">Thư viện</label>
+                        <select id="filterLibrary" class="form-select">
+                            <option value="">Tất cả thư viện</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="filterCategory" class="form-label">Danh mục</label>
+                        <select id="filterCategory" class="form-select">
+                            <option value="">Tất cả danh mục</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="filterAuthor" class="form-label">Tác giả</label>
+                        <select id="filterAuthor" class="form-select">
+                            <option value="">Tất cả tác giả</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="row">
+                    <div class="col-md-6 mb-3">
+                        <label for="filterLanguage" class="form-label">Ngôn ngữ</label>
+                        <select id="filterLanguage" class="form-select">
+                            <option value="">Tất cả ngôn ngữ</option>
+                            <option value="Vietnamese">Tiếng Việt</option>
+                            <option value="English">Tiếng Anh</option>
+                            <option value="Japanese">Tiếng Nhật</option>
+                            <option value="French">Tiếng Pháp</option>
+                            <option value="Spanish">Tiếng Tây Ban Nha</option>
+                        </select>
+                    </div>
+                    <div class="col-md-6 mb-3">
+                        <label for="filterStatus" class="form-label">Trạng thái</label>
+                        <select id="filterStatus" class="form-select">
+                            <option value="">Tất cả trạng thái</option>
+                            <option value="available">Có sẵn</option>
+                            <option value="borrowed">Đã mượn</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="button" id="clearFilters" class="btn btn-outline-secondary">
+                        <i class="fa-solid fa-eraser"></i> Xóa bộ lọc
+                    </button>
+                    <button type="submit" class="btn btn-primary">
+                        <i class="fa-solid fa-search"></i> Tìm kiếm
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+    (function(){
+      // (Giữ nguyên logic search cũ)
+      const searchInput = document.getElementById('searchInput');
+      const searchDropdown = document.getElementById('searchDropdown');
+      const searchResults = document.getElementById('searchResults');
+      const searchForm = document.getElementById('searchForm');
+      let debounceTimer=null;
+      if(searchInput){
+        function showDropdown(){ searchDropdown.classList.remove('d-none'); }
+        function hideDropdown(){ searchDropdown.classList.add('d-none'); }
+        function setLoading(){
+          searchResults.innerHTML='<div class="search-loading"><i class="fas fa-spinner fa-spin"></i> Đang tìm kiếm...</div>';
+          showDropdown();
+        }
+        async function fetchQuickResults(q){
+          try{
+            const resp=await fetch(`/search/quick?q=${encodeURIComponent(q)}&limit=5`,
+              { headers:{'X-Requested-With':'XMLHttpRequest'} });
+            searchResults.innerHTML=await resp.text();
+            showDropdown();
+          }catch{
+            searchResults.innerHTML='<div class="search-no-results"><i class="fas fa-exclamation-triangle"></i><br>Lỗi tải kết quả</div>';
+            showDropdown();
+          }
+        }
+        searchInput.addEventListener('input',e=>{
+          const v=e.target.value.trim();
+          if(debounceTimer) clearTimeout(debounceTimer);
+          if(!v){ hideDropdown(); return; }
+          debounceTimer=setTimeout(()=>{
+            setLoading();
+              fetchQuickResults(v);
+          },600);
+        });
+        searchForm.addEventListener('submit',e=>{
+          e.preventDefault();
+          const q=searchInput.value.trim();
+          if(!q){ hideDropdown(); return; }
+          window.location.href=`/search?q=${encodeURIComponent(q)}`;
+        });
+        document.addEventListener('click',e=>{
+          if(!e.target.closest('.search-container')) hideDropdown();
+        });
+      }
+
+      // Dropdown toggle
+      const trigger = document.getElementById('userTrigger');
+      const dropdown = document.getElementById('userDropdown');
+      if(trigger && dropdown){
+        function closeMenu(){
+          dropdown.classList.remove('open');
+          trigger.setAttribute('aria-expanded','false');
+        }
+        function openMenu(){
+          dropdown.classList.add('open');
+          trigger.setAttribute('aria-expanded','true');
+        }
+        trigger.addEventListener('click', e=>{
+          e.preventDefault();
+          dropdown.classList.contains('open') ? closeMenu() : openMenu();
+        });
+        document.addEventListener('click', e=>{
+          if(!e.target.closest('#userMenu')) closeMenu();
+        });
+        document.addEventListener('keydown', e=>{
+          if(e.key === 'Escape') closeMenu();
+        });
+      }
+
+      const filterToggle = document.getElementById('filterToggle');
+      const filterModal = document.getElementById('filterModal');
+      const closeFilter = document.getElementById('closeFilter');
+      const filterForm = document.getElementById('filterForm');
+      const clearFilters = document.getElementById('clearFilters');
+
+      if(filterToggle && filterModal) {
+        filterToggle.addEventListener('click', function(e) {
+          e.preventDefault();
+          filterModal.classList.remove('d-none');
+          document.body.style.overflow = 'hidden';
+          loadFilterOptions();
+        });
+
+        function closeFilterModal() {
+          filterModal.classList.add('d-none');
+          document.body.style.overflow = 'auto';
+        }
+
+        closeFilter.addEventListener('click', closeFilterModal);
+        
+        filterModal.addEventListener('click', function(e) {
+          if(e.target === filterModal) {
+            closeFilterModal();
+          }
+        });
+
+        document.addEventListener('keydown', function(e) {
+          if(e.key === 'Escape' && !filterModal.classList.contains('d-none')) {
+            closeFilterModal();
+          }
+        });
+
+        clearFilters.addEventListener('click', function() {
+          filterForm.reset();
+          window.location.href = '/search';
+        });
+
+        filterForm.addEventListener('submit', function(e) {
+          e.preventDefault();
+          performFilterSearch();
+        });
+
+        async function loadFilterOptions() {
+          try {
+            const response = await fetch('/api/filter-options');
+            if(response.ok) {
+              const data = await response.json();
+              populateFilterOptions(data);
+            }
+          } catch(error) {
+            console.error('Error loading filter options:', error);
+          }
+        }
+
+        function populateFilterOptions(data) {
+          const categorySelect = document.getElementById('filterCategory');
+          if(data.categories) {
+            categorySelect.innerHTML = '<option value="">Tất cả danh mục</option>';
+            data.categories.forEach(category => {
+              categorySelect.innerHTML += `<option value="${category.category_id}">${category.name}</option>`;
+            });
+          }
+
+          const authorSelect = document.getElementById('filterAuthor');
+          if(data.authors) {
+            authorSelect.innerHTML = '<option value="">Tất cả tác giả</option>';
+            data.authors.forEach(author => {
+              authorSelect.innerHTML += `<option value="${author.author_id}">${author.name}</option>`;
+            });
+          }
+
+          const librarySelect = document.getElementById('filterLibrary');
+          if(data.libraries) {
+            librarySelect.innerHTML = '<option value="">Tất cả thư viện</option>';
+            data.libraries.forEach(library => {
+              librarySelect.innerHTML += `<option value="${library}">${library}</option>`;
+            });
+          }
+        }
+
+          function performFilterSearch() {
+            const formData = new FormData(filterForm);
+            const params = new URLSearchParams();
+            
+            const keyword = document.getElementById('filterKeyword').value.trim();
+            const library = document.getElementById('filterLibrary').value;
+            const category = document.getElementById('filterCategory').value;
+            const author = document.getElementById('filterAuthor').value;
+            const language = document.getElementById('filterLanguage').value;
+            const status = document.getElementById('filterStatus').value;
+
+            if(keyword) params.append('q', keyword);
+            if(library) params.append('library', library);
+            if(category) params.append('category', category);
+            if(author) params.append('author', author);
+            if(language) params.append('language', language);
+            if(status) params.append('status', status);
+
+            const queryString = params.toString();
+            window.location.href = `/search${queryString ? '?' + queryString : ''}`;
+          }
+      }
+    })();
+</script>
