@@ -11,7 +11,6 @@
             <span class="brand">Thư viện số</span>
         </div>
 
-
         <div class="top-actions">
             <div class="auth-buttons-colored">
                 <a href="{{ url_for('auth.login') }}" class="btn-auth btn-blue-login">
@@ -66,8 +65,6 @@
                 placeholder="you@example.com">
             </div>
 
-
-
             <div class="mb-3">
               <label class="form-label" for="phone_number">Số điện thoại</label>
               <input
@@ -79,6 +76,16 @@
                 title="Bắt đầu bằng 0 và dài 10-11 chữ số"
                 value="{{ (form.phone_number if form is defined else '') or '' }}"
                 placeholder="0xxxxxxxxx (10-11 số)">
+            </div>
+
+            <div class="mb-3">
+              <label class="form-label" for="gender">Giới tính</label>
+              <select class="form-select" id="gender" name="gender" required>
+                <option value="">Chọn giới tính</option>
+                <option value="Nam" {% if form is defined and form.gender == "Nam" %}selected{% endif %}>Nam</option>
+                <option value="Nữ" {% if form is defined and form.gender == "Nữ" %}selected{% endif %}>Nữ</option>
+                <option value="Khác" {% if form is defined and form.gender == "Khác" %}selected{% endif %}>Khác</option>
+              </select>
             </div>
 
             <div class="row">

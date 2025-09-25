@@ -29,13 +29,15 @@ def login():
         if not user or not check_password_hash(user.password, password):
             flash("Tên đăng nhập hoặc mật khẩu không chính xác!", "danger")
             return redirect(url_for('auth.login', next=next_url) if next_url else url_for('auth.login'))
+        if not getattr(user, 'is_active', 1):
+            flash("Tài khoản của bạn đã bị khóa hoặc chưa kích hoạt.", "danger")
+            return redirect(url_for('auth.login', next=next_url) if next_url else url_for('auth.login'))
         login_user(user)
         flash("Đăng nhập thành công", "success")
         if next_url and is_safe_url(next_url):
             return redirect(next_url)
         return redirect(url_for('main.index'))
     return render_template("login.html", next_url=next_url)
-
 @auth_bp.route("/register", methods=["GET", "POST"])
 def register():
     if current_user.is_authenticated:
@@ -48,9 +50,14 @@ def register():
         confirm_password = form.get("confirm_password","")
         full_name = form.get("full_name","").strip()
         phone_number = form.get("phone_number","").strip()
-        gender = form.get("gender")  # Nam / Nữ / Khác
+        gender = form.get("gender")
 
-        # Kiểm tra cơ bản
+
+        if not username or not email or not password or not confirm_password or not full_name:
+            flash("Vui lòng nhập đầy đủ thông tin bắt buộc!", "danger")
+            return render_template("register.html", form=form)
+
+
         if password != confirm_password:
             flash("Mật khẩu xác nhận không khớp!", "danger")
             return render_template("register.html", form=form)
@@ -62,7 +69,6 @@ def register():
             return render_template("register.html", form=form)
         if phone_number:
             digits = ''.join(ch for ch in phone_number if ch.isdigit())
-            # 0 + 9 hoặc 10 chữ số
             import re
             if not re.fullmatch(r"0\d{9,10}", digits):
                 flash("Số điện thoại không hợp lệ (phải bắt đầu 0 và dài 10-11 số)", "danger")
@@ -70,6 +76,7 @@ def register():
         if gender not in ("Nam","Nữ","Khác", None, ""):
             flash("Giới tính không hợp lệ", "danger")
             return render_template("register.html", form=form)
+
 
         service = UserService()
         try:
@@ -97,7 +104,7 @@ def register():
             return render_template("register.html", form=form)
         flash("Đăng ký thành công, vui lòng đăng nhập", "success")
         return redirect(url_for('auth.login'))
-    # GET
+
     return render_template("register.html")
 
 @auth_bp.route("/logout")

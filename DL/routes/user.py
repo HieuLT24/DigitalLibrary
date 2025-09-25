@@ -64,11 +64,14 @@ def update_profile():
     except ValueError as e:
         msg = str(e)
         mapping = {
-            'EMAIL_EXISTS': 'Email đã tồn tại',
+            'FULLNAME_TOO_SHORT': 'Họ tên tối thiểu 2 ký tự!',
             'INVALID_PHONE_LENGTH': 'Số điện thoại tối đa 11 chữ số',
-            'USER_NOT_FOUND': 'Không tìm thấy người dùng'
+            'EMAIL_EXISTS': 'Email đã tồn tại'
         }
-        flash(mapping.get(msg, 'Cập nhật thất bại'), 'danger')
+        if msg in mapping:
+            flash(mapping[msg], 'danger')
+        else:
+            flash('Cập nhật thất bại', 'danger')
     return redirect(url_for('user.user_profile'))
 
 
